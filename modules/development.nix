@@ -40,7 +40,7 @@
       # Database clients
       postgresql
       sqlite
-      dbeaver
+      dbeaver-bin
     ]
     ++ (import ../packages/development.nix {inherit pkgs;});
 

@@ -38,5 +38,10 @@
     };
   };
 
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    allowUnfree = true;
+    permittedInsecurePackages = [
+      "electron-33.4.11" # Required for discord
+    ];
+  };
 }

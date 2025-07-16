@@ -7,3 +7,17 @@ repos:
         language: system
         files: \.nix$
         pass_filenames: true
+        
+      - id: nix-flake-check
+        name: Nix flake check
+        entry: bash -c 'if [[ $(git diff --cached --name-only | grep -E "\.(nix|lock)$") ]]; then nix flake check --no-write-lock-file; fi'
+        language: system
+        pass_filenames: false
+        always_run: true
+        
+      - id: nix-eval-check
+        name: Check nixos config evaluation
+        entry: bash -c 'if [[ $(git diff --cached --name-only | grep -E "\.(nix)$") ]]; then nix eval .#nixosConfigurations.nixos.config.system.build.toplevel.drvPath --no-write-lock-file >/dev/null; fi'
+        language: system
+        pass_filenames: false
+        always_run: true

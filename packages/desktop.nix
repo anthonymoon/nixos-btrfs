@@ -13,5 +13,5 @@ with pkgs; [
   blueman
 
   # Fonts
-  nerd-fonts.fira-code
+  (nerdfonts.override {fonts = ["FiraCode"];})
 ]

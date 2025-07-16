@@ -29,7 +29,7 @@ with pkgs; [
   })
 
   # Performance monitoring
-  nvtop
+  nvtopPackages.full
   radeontop
 
   # Additional tools

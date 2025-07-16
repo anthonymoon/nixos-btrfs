@@ -10,8 +10,8 @@
     extraPackages = with pkgs; [
       mesa
       amdvlk
-      rocm-opencl-icd
-      rocm-opencl-runtime
+      rocmPackages.clr
+      rocmPackages.clr.icd
       vulkan-loader
       vulkan-validation-layers
       vulkan-tools
