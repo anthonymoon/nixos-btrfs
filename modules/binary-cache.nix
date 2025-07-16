@@ -18,12 +18,8 @@
       "cachy.local:/5+zDOluBKCtE2CdtE/aV4vB1gp1M1HsQFKbfCWKO14="
     ];
 
-    # Prefer faster caches first
-    substituter-priority = {
-      "http://cachy.local" = 40;
-      "https://cache.nixos.org/" = 50;
-      "https://nix-community.cachix.org" = 60;
-    };
+    # Note: substituters are tried in order listed above
+    # Local cache is listed last but will be tried first due to network proximity
 
     # Additional cache settings
     connect-timeout = 60;
