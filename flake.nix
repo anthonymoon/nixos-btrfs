@@ -33,7 +33,7 @@
       ...
     }: {
       imports = [
-        "${modulesPath}/installer/scan/not-detected.nix"
+        ./hardware-configuration.nix
         home-manager.nixosModules.home-manager
       ];
 
@@ -59,38 +59,7 @@
         users.amoon = import ./home.nix;
       };
 
-      # Boot configuration
-      boot.loader.systemd-boot.enable = true;
-      boot.loader.efi.canTouchEfiVariables = true;
-
-      # ZFS configuration
-      boot.supportedFilesystems = ["zfs"];
-      boot.zfs.forceImportRoot = true; # Force import of root pool
-      boot.zfs.requestEncryptionCredentials = false;
-      # Set a proper unique hostId (required for ZFS)
-      networking.hostId = "abcd1234";
-
-      # ZFS services
-      services.zfs.autoScrub.enable = true;
-      services.zfs.autoSnapshot.enable = true;
-
-      # ZFS boot optimizations
-      boot.kernelParams = [
-        "zfs.zfs_arc_max=2147483648" # 2GB ARC max for smaller systems
-      ];
-
-      # Ensure ZFS pool imports at boot
-      boot.zfs.extraPools = ["zroot"];
-
-      # Enable ZFS in initrd
-      boot.initrd.supportedFilesystems = ["zfs"];
-
-      # Root filesystem configuration
-      fileSystems."/" = {
-        device = "zroot/root/nixos";
-        fsType = "zfs";
-        options = ["zfsutil"];
-      };
+      # Hardware and boot configuration moved to hardware-configuration.nix
 
       # Network configuration
       networking.networkmanager.enable = false;
@@ -339,7 +308,7 @@
   in {
     # NixOS configurations for different platforms
     nixosConfigurations = {
-      # Bare metal configuration
+      # Bare metal configuration with zroot pool
       nixos-dev = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
@@ -347,6 +316,21 @@
           diskoConfig
           baseConfig
           baremetalConfig
+        ];
+      };
+
+      # Bare metal configuration with rpool structure
+      nixos-rpool = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          disko.nixosModules.disko
+          ./disko-config-rpool.nix
+          baseConfig
+          baremetalConfig
+          ({config, ...}: {
+            # Override networking to use different hostName for rpool
+            networking.hostName = "with-rpool";
+          })
         ];
       };
 
