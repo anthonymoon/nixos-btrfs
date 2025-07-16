@@ -19,15 +19,16 @@
     extraPackages32 = with pkgs.pkgsi686Linux; [mesa];
   };
 
-  services.xserver.videoDrivers = ["nvidia" "amdgpu"];
+  services.xserver.videoDrivers = lib.mkDefault ["amdgpu"]; # NVIDIA can be added post-install
 
-  hardware.nvidia = {
-    modesetting.enable = true;
-    powerManagement.enable = true;
-    open = false;
-    nvidiaSettings = true;
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
-  };
+  # NVIDIA configuration (uncomment and add "nvidia" to videoDrivers if needed)
+  # hardware.nvidia = {
+  #   modesetting.enable = true;
+  #   powerManagement.enable = true;
+  #   open = false;
+  #   nvidiaSettings = true;
+  #   package = config.boot.kernelPackages.nvidiaPackages.stable;
+  # };
 
   programs.steam = {
     enable = true;
