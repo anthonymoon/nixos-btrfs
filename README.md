@@ -39,17 +39,28 @@ A modular NixOS configuration following community standards with comprehensive s
 
 ## Installation
 
-1. Boot from NixOS installer
-2. Partition disk:
-   ```bash
-   # The configuration expects /dev/sda, modify disk-config.nix if needed
-   ```
-3. Clone and install:
-   ```bash
-   git clone <repository-url> /mnt/etc/nixos
-   cd /mnt/etc/nixos
-   sudo nixos-install --flake .#nixos
-   ```
+### Quick Install (from NixOS LiveCD)
+
+```bash
+# Install with flake (requires experimental features)
+sudo nix --extra-experimental-features "nix-command flakes" run github:anthonymoon/nixos-zfsroot#install
+
+# Or use curl installer
+curl -sL https://raw.githubusercontent.com/anthonymoon/nixos-zfsroot/main/install.sh | sudo bash
+
+# Specify different disk (default is /dev/sda)
+sudo nix --extra-experimental-features "nix-command flakes" run github:anthonymoon/nixos-zfsroot#install -- /dev/nvme0n1
+```
+
+### Manual Install
+
+```bash
+# Partition and format
+sudo nix run github:nix-community/disko -- --mode disko --flake github:anthonymoon/nixos-zfsroot#nixos
+
+# Install
+sudo nixos-install --flake github:anthonymoon/nixos-zfsroot#nixos
+```
 
 ## Disk Layout (Btrfs)
 
