@@ -32,6 +32,7 @@
     }: {
       imports = [
         ./hardware-configuration.nix
+        ./filesystem-support.nix
         home-manager.nixosModules.home-manager
       ];
 

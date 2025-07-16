@@ -36,6 +36,9 @@
       "rd.udev.log_level=3"
     ];
 
+    # Support for additional filesystems
+    supportedFilesystems = ["ntfs" "exfat" "xfs" "zfs" "btrfs"];
+
     kernelModules = ["kvm-amd" "kvm-intel"];
     extraModulePackages = [];
 

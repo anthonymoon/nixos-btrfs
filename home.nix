@@ -275,6 +275,9 @@
     # File management
     broot
     ranger
+    mc # Midnight Commander
+    nnn # Terminal file manager
+    xplr # Hackable file explorer
 
     # Development
     vscode
