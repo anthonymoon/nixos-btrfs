@@ -9,7 +9,6 @@
     "exfat"
     "btrfs"
     "xfs"
-    "zfs"
     "ext4"
     "vfat"
   ];
@@ -20,7 +19,6 @@
       exfatprogs
       xfsprogs
       btrfs-progs
-      zfs
       apfsprogs
       gparted
       parted

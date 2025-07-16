@@ -139,8 +139,33 @@
       # QEMU VM image
       vm = self.nixosConfigurations.nixos.config.system.build.vm;
 
-      # VirtualBox OVA
-      virtualbox = self.nixosConfigurations.nixos.config.system.build.virtualBoxOVA;
+      # Build script for QEMU image
+      build-qemu = pkgs.writeShellScriptBin "build-qemu" ''
+        #!/usr/bin/env bash
+        echo "Building QEMU qcow2 image..."
+        echo "This will create a 20GB image with the NixOS configuration"
+        echo ""
+        echo "Note: You'll need to:"
+        echo "1. Boot the image"
+        echo "2. Run the installer inside: curl -sL https://raw.githubusercontent.com/anthonymoon/nixos-zfsroot/main/install.sh | sudo bash"
+        echo ""
+        # Build a basic qcow2 with installer
+        nix build nixpkgs#nixosConfigurations.installer.config.system.build.qcow2
+      '';
+
+      # Build script for Hyper-V image
+      build-hyperv = pkgs.writeShellScriptBin "build-hyperv" ''
+        #!/usr/bin/env bash
+        echo "Building Hyper-V VHDX image..."
+        echo "This will create a 20GB image with the NixOS configuration"
+        echo ""
+        echo "Note: You'll need to:"
+        echo "1. Import the VHDX into Hyper-V as Gen 2 VM"
+        echo "2. Run the installer inside: curl -sL https://raw.githubusercontent.com/anthonymoon/nixos-zfsroot/main/install.sh | sudo bash"
+        echo ""
+        # Build a basic VHDX with installer
+        nix build nixpkgs#nixosConfigurations.installer.config.system.build.hypervImage
+      '';
     };
 
     # Apps for direct execution

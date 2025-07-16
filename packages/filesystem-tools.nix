@@ -6,7 +6,6 @@ with pkgs; [
   exfatprogs
   xfsprogs
   btrfs-progs
-  zfstools
   apfsprogs
 
   # Disk management

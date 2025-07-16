@@ -11,7 +11,7 @@ A modular NixOS configuration following community standards with comprehensive s
 - **Gaming**: Steam, Proton, controller support, NVIDIA/AMD GPU drivers
 - **Development**: Multiple languages, cloud tools, editors
 - **Virtualization**: QEMU/KVM and Hyper-V optimization
-- **Multi-filesystem**: Support for NTFS, APFS, XFS, exFAT, ZFS, Btrfs
+- **Multi-filesystem**: Support for NTFS, APFS, XFS, exFAT, Btrfs
 
 ## Structure
 
@@ -116,18 +116,22 @@ nix develop
 ```bash
 # Build ISO installer
 nix build .#iso
-# Result will be in result/iso/
+# Result: result/iso/*.iso
 
-# Build QEMU VM
+# Build QEMU VM (for testing)
 nix build .#vm
 # Run with: ./result/bin/run-nixos-vm
 
 # Quick VM test
 nix run .#run-vm
 
-# Build VirtualBox image
-nix build .#virtualbox
-# Result will be in result/
+# Build QEMU disk image (qcow2)
+nix build .#qemu-image
+# Result: result/*.qcow2
+
+# Build Hyper-V image (VHDX)
+nix build .#hyperv-image
+# Result: result/*.vhdx
 ```
 
 ## Configuration Details

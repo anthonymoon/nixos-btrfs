@@ -43,13 +43,14 @@
     adguardhome = {
       enable = true;
       mutableSettings = false;
+      host = "0.0.0.0";
+      port = 3000;
       settings = {
-        bind_host = "0.0.0.0";
-        bind_port = 3000;
         dns = {
           bind_hosts = ["0.0.0.0"];
           port = 53;
           upstream_dns = ["94.140.14.14" "94.140.15.15"];
+          bootstrap_dns = ["9.9.9.9" "1.1.1.1"];
         };
       };
     };
