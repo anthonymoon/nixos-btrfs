@@ -30,8 +30,11 @@
       cat = "bat";
       find = "fd";
       grep = "rg";
-      zstat = "zpool status -v";
-      zlist = "zfs list -o name,used,avail,refer,compressratio,dedup";
+      # Btrfs aliases
+      bstat = "sudo btrfs filesystem show";
+      blist = "sudo btrfs subvolume list /";
+      bdf = "sudo btrfs filesystem df /";
+      bsnap = "sudo snapper -c home list";
     };
   };
 
@@ -47,7 +50,7 @@
     };
   };
 
-  # Terminal (option to use bleeding-edge Alacritty)
+  # Terminal
   programs.kitty = {
     enable = true;
     settings = {
@@ -57,12 +60,6 @@
       window_padding_width = 10;
     };
   };
-
-  # Alternative: bleeding-edge Alacritty
-  # programs.alacritty = {
-  #   enable = true;
-  #   package = pkgs.alacritty_git;
-  # };
 
   # Hyprland configuration
   wayland.windowManager.hyprland = {
@@ -261,104 +258,55 @@
     '';
   };
 
-  # Development tools with bleeding-edge packages
-  home.packages = with pkgs;
-    [
-      # Terminal tools (bleeding-edge versions)
-      eza
-      bat
-      fd
-      ripgrep
-      htop
-      btop
-      ncdu
+  # Development tools - stable versions only
+  home.packages = with pkgs; [
+    # Terminal tools
+    eza
+    bat
+    fd
+    ripgrep
+    htop
+    btop
+    ncdu
+    tree
+    jq
+    yq
 
-      # Development
-      vscode
-      git-crypt
-      (
-        if (builtins.hasAttr "helix_git" pkgs)
-        then helix_git
-        else helix
-      ) # Modal editor
-      (
-        if (builtins.hasAttr "zed-editor_git" pkgs)
-        then zed-editor_git
-        else zed-editor
-      ) # High-performance editor
+    # File management
+    broot
+    ranger
 
-      # Media
-      (
-        if (builtins.hasAttr "firefox_nightly" pkgs)
-        then firefox_nightly
-        else firefox
-      ) # Web browser
-      (
-        if (builtins.hasAttr "mpv-vapoursynth" pkgs)
-        then mpv-vapoursynth
-        else mpv
-      ) # Enhanced mpv
+    # Development
+    vscode
+    git-crypt
+    helix # Modal editor
+    evil-helix # Helix with evil mode
+    neovim
+    zed-editor # High-performance collaborative editor
 
-      # Gaming
-      steam
-      lutris
-      wine
-      (
-        if (builtins.hasAttr "discord-krisp" pkgs)
-        then discord-krisp
-        else discord
-      ) # Chat with noise suppression
+    # Media
+    firefox
+    mpv
+    pavucontrol
 
-      # System
-      pavucontrol
-      blueman
+    # System tools
+    blueman
+    compsize # Btrfs compression analyzer
+    snapper # Snapshot management
 
-      # Wayland tools
-      wofi
-      grim
-      slurp
-      wl-clipboard
-      mako
+    # Wayland tools
+    wofi
+    grim
+    slurp
+    wl-clipboard
+    mako
 
-      # Communication
-      (
-        if (builtins.hasAttr "telegram-desktop_git" pkgs)
-        then telegram-desktop_git
-        else telegram-desktop
-      ) # Telegram
+    # Communication
+    telegram-desktop
 
-      # Fonts
-      nerd-fonts.fira-code
-    ]
-    ++ (builtins.filter (pkg: pkg != null) [
-      # System monitoring (optional)
-      (
-        if (builtins.hasAttr "nix-top_abandoned" pkgs)
-        then nix-top_abandoned
-        else null
-      )
-      # Chaotic packages (only available with chaotic overlay)
-      (
-        if (builtins.hasAttr "mangohud_git" pkgs)
-        then pkgs.mangohud_git
-        else null
-      )
-      (
-        if (builtins.hasAttr "gamescope_git" pkgs)
-        then pkgs.gamescope_git
-        else null
-      )
-      (
-        if (builtins.hasAttr "pwvucontrol_git" pkgs)
-        then pkgs.pwvucontrol_git
-        else null
-      )
-      (
-        if (builtins.hasAttr "openrgb_git" pkgs)
-        then pkgs.openrgb_git
-        else null
-      )
-    ]);
+    # Fonts
+    nerd-fonts.fira-code
+  ];
 
   # XDG configuration
   xdg.enable = true;

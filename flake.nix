@@ -2,10 +2,9 @@
   description = "NixOS ZFS Installation System with Multi-Platform Support";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "github:nix-community/home-manager/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     disko = {
@@ -17,7 +16,6 @@
   outputs = {
     self,
     nixpkgs,
-    chaotic,
     home-manager,
     disko,
   }: let
@@ -95,13 +93,9 @@
         };
       };
 
-      # Gaming support
-      programs.steam.enable = true;
-      programs.gamemode.enable = true;
-
+      # Graphics support (no gaming)
       hardware.graphics = {
         enable = true;
-        enable32Bit = true;
       };
 
       # System packages (base installation)
@@ -123,10 +117,6 @@
         eza
         bat
         ncdu
-
-        # Gaming (basic packages)
-        lutris
-        wine
 
         # Media tools
         firefox
@@ -153,20 +143,44 @@
       pkgs,
       ...
     }: {
-      # QEMU/KVM optimizations
+      # QEMU/KVM full integration
       services.qemuGuest.enable = true;
       services.spice-vdagentd.enable = true;
+
+      # Enable QEMU guest agent for better host integration
+      services.qemu-guest-agent.enable = true;
+
+      # Virtio modules for best performance
+      boot.initrd.availableKernelModules = [
+        "virtio_pci"
+        "virtio_scsi"
+        "virtio_blk"
+        "virtio_net"
+        "virtio_balloon"
+        "virtio_console"
+      ];
       boot.kernelModules = ["virtio_balloon" "virtio_console" "virtio_rng"];
 
-      # Graphics with bleeding-edge Mesa
-      hardware.graphics.extraPackages = with pkgs; [
-        mesa.drivers
+      # Graphics optimized for VMs
+      hardware.graphics = {
+        enable = true;
+        extraPackages = with pkgs; [
+          mesa.drivers
+        ];
+      };
+
+      # SPICE integration for clipboard and display
+      environment.systemPackages = with pkgs; [
+        spice-gtk
+        spice-protocol
+        spice-vdagent
       ];
 
-      # VM-specific packages
-      environment.systemPackages = with pkgs; [
-        # Add any VM specific packages here
-      ];
+      # Optimize for VM environment
+      boot.kernelParams = ["console=ttyS0,115200"];
+
+      # Network optimization for virtio
+      networking.interfaces.ens3.useDHCP = lib.mkDefault true;
     };
 
     hypervConfig = {
@@ -175,9 +189,37 @@
       pkgs,
       ...
     }: {
-      # HyperV optimizations
-      virtualisation.hypervGuest.enable = true;
-      boot.kernelParams = ["video=hyperv_fb:1920x1080"];
+      # Full Hyper-V integration
+      virtualisation.hypervGuest = {
+        enable = true;
+        videoMode = "1920x1080";
+      };
+
+      # Hyper-V specific kernel modules
+      boot.initrd.availableKernelModules = [
+        "hv_vmbus"
+        "hv_netvsc"
+        "hv_storvsc"
+        "hv_utils"
+        "hv_balloon"
+      ];
+
+      boot.kernelParams = [
+        "video=hyperv_fb:1920x1080"
+        "console=ttyS0,115200"
+        "console=tty0"
+      ];
+
+      # Enable Hyper-V daemons for time sync, KVP, etc.
+      services.hypervkvpd.enable = true;
+
+      # Hyper-V optimized network
+      networking.interfaces.eth0.useDHCP = lib.mkDefault true;
+
+      # Install integration tools
+      environment.systemPackages = with pkgs; [
+        linux-firmware # For Hyper-V synthetic drivers
+      ];
     };
 
     baremetalConfig = {
@@ -319,6 +361,34 @@
         ];
       };
 
+      # Btrfs configuration with libre kernel
+      nixos-btrfs = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          disko.nixosModules.disko
+          ./disko-config-btrfs.nix
+          ./hardware-configuration-btrfs.nix
+          baseConfig
+          ({
+            config,
+            pkgs,
+            ...
+          }: {
+            # Override kernel to use latest libre
+            boot.kernelPackages = pkgs.linuxKernel.packages.linux_latest_libre;
+
+            # Btrfs-specific optimizations
+            boot.supportedFilesystems = ["btrfs"];
+
+            # Override hardware config to remove proprietary firmware
+            hardware.enableRedistributableFirmware = false;
+
+            # Use only free software
+            nixpkgs.config.allowUnfree = false;
+          })
+        ];
+      };
+
       # Bare metal configuration with rpool structure
       nixos-rpool = nixpkgs.lib.nixosSystem {
         inherit system;
@@ -334,11 +404,10 @@
         ];
       };
 
-      # Bare metal configuration with Chaotic Nyx (use AFTER base installation)
-      nixos-dev-chaotic = nixpkgs.lib.nixosSystem {
+      # Removed Chaotic Nyx configurations
+      nixos-dev-removed = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          chaotic.nixosModules.default
           baseConfig
           baremetalConfig
           ({
@@ -347,35 +416,7 @@
             pkgs,
             ...
           }: {
-            # Chaotic Nyx bleeding-edge configuration
-            boot.kernelPackages = pkgs.linuxPackages_cachyos;
-
-            services.scx = {
-              enable = true;
-              scheduler = "scx_rustland";
-              package = pkgs.scx_git.full;
-            };
-
-            chaotic.hdr.enable = true;
-            chaotic.mesa-git.enable = true;
-            chaotic.mesa-git.extraPackages = with pkgs; [
-              intel-media-driver
-              vaapiIntel
-            ];
-
-            services.ananicy = {
-              enable = true;
-              package = pkgs.ananicy-cpp;
-              rulesProvider = pkgs.ananicy-rules-cachyos_git;
-            };
-
-            chaotic.nyx.cache.enable = true;
-            chaotic.nyx.overlay.enable = true;
-            chaotic.nyx.registry.enable = true;
-
-            environment.systemPackages = with pkgs; [
-              firefox_nightly
-            ];
+            # Removed - was Chaotic configuration
           })
         ];
       };
@@ -391,11 +432,37 @@
         ];
       };
 
-      # QEMU/KVM configuration with Chaotic Nyx (use AFTER base installation)
-      nixos-qemu-chaotic = nixpkgs.lib.nixosSystem {
+      # QEMU/KVM Btrfs configuration with libre kernel
+      nixos-qemu-btrfs = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          chaotic.nixosModules.default
+          disko.nixosModules.disko
+          ./disko-config-btrfs.nix
+          ./hardware-configuration-btrfs.nix
+          baseConfig
+          qemuConfig
+          ({
+            config,
+            pkgs,
+            ...
+          }: {
+            # Override kernel to use latest libre
+            boot.kernelPackages = pkgs.linuxKernel.packages.linux_latest_libre;
+
+            # QEMU-specific Btrfs optimizations
+            boot.kernelParams = ["threadirqs" "mitigations=off"];
+
+            # Use only free software
+            nixpkgs.config.allowUnfree = false;
+            hardware.enableRedistributableFirmware = false;
+          })
+        ];
+      };
+
+      # Removed QEMU Chaotic configuration
+      nixos-qemu-removed = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
           baseConfig
           qemuConfig
           ({
@@ -404,17 +471,7 @@
             pkgs,
             ...
           }: {
-            # Chaotic Nyx configuration for VMs
-            chaotic.mesa-git.enable = true;
-            chaotic.nyx.cache.enable = true;
-            chaotic.nyx.overlay.enable = true;
-            chaotic.nyx.registry.enable = true;
-
-            environment.systemPackages = with pkgs; [
-              gamescope_git
-              mangohud_git
-              firefox_nightly
-            ];
+            # Removed - was Chaotic configuration
           })
         ];
       };
