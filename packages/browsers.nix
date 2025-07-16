@@ -1,8 +1,8 @@
 # Web browsers
 {pkgs, ...}:
 with pkgs; [
-  thorium
+  chromium
   microsoft-edge
   tor-browser-bundle-bin
-  zen-browser
+  firefox
 ]

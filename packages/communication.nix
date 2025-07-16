@@ -4,6 +4,5 @@ with pkgs; [
   telegram-desktop
   slack
   signal-desktop
-  whatsappforlinux
   discord
 ]

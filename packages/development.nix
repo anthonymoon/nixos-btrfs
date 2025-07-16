@@ -3,9 +3,7 @@
 with pkgs; [
   # Editors
   vscode
-  vscode-insiders
   helix
-  evil-helix
   neovim
   zed-editor
 

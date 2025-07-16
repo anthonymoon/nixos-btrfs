@@ -81,9 +81,9 @@
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      "text/html" = "thorium.desktop";
-      "x-scheme-handler/http" = "thorium.desktop";
-      "x-scheme-handler/https" = "thorium.desktop";
+      "text/html" = "chromium.desktop";
+      "x-scheme-handler/http" = "chromium.desktop";
+      "x-scheme-handler/https" = "chromium.desktop";
     };
   };
 
