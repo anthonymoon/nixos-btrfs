@@ -376,11 +376,13 @@
   # Services
   services.mako = {
     enable = true;
-    defaultTimeout = 5000;
-    backgroundColor = "#2b303b";
-    textColor = "#ffffff";
-    borderColor = "#65737e";
-    borderRadius = 5;
+    settings = {
+      default-timeout = 5000;
+      background-color = "#2b303b";
+      text-color = "#ffffff";
+      border-color = "#65737e";
+      border-radius = 5;
+    };
   };
 
   # Let Home Manager install and manage itself
