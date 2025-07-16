@@ -5,7 +5,7 @@ echo "NixOS Installer"
 echo "==============="
 echo ""
 echo "This will install NixOS with configuration from:"
-echo "https://github.com/anthonymoon/nixos-zfsroot"
+echo "https://github.com/anthonymoon/nixos-btrfs"
 echo ""
 echo "WARNING: This will ERASE the target disk!"
 echo ""
@@ -18,7 +18,7 @@ fi
 
 # Default values
 DISK="${1:-/dev/sda}"
-FLAKE_URL="github:anthonymoon/nixos-zfsroot#nixos"
+FLAKE_URL="github:anthonymoon/nixos-btrfs#nixos"
 
 # Show disk info
 echo "Target disk: $DISK"
@@ -58,6 +58,6 @@ echo ""
 echo "Next steps:"
 echo "1. Reboot into your new system"
 echo "2. Set user password: passwd amoon"
-echo "3. Deploy updates: sudo nixos-rebuild switch --flake github:anthonymoon/nixos-zfsroot#nixos"
+echo "3. Deploy updates: sudo nixos-rebuild switch --flake github:anthonymoon/nixos-btrfs#nixos"
 echo ""
 echo "Enjoy your new NixOS system!"

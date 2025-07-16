@@ -13,14 +13,11 @@ with pkgs; [
   goverlay
   gamemode
 
-  # Wine/Proton
-  wine-staging
-  winetricks
+  # Wine/Proton managed by Lutris/Bottles
   protonup-qt
   protontricks
 
   # Emulation
-  mame
   (retroarch.override {
     cores = with libretro; [
       mame

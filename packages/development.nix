@@ -3,9 +3,7 @@
 with pkgs; [
   # Editors
   vscode
-  helix
   neovim
-  zed-editor
 
   # Version control
   git-crypt

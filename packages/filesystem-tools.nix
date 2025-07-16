@@ -6,7 +6,6 @@ with pkgs; [
   exfatprogs
   xfsprogs
   btrfs-progs
-  apfsprogs
 
   # Disk management
   gparted
@@ -16,20 +15,11 @@ with pkgs; [
   # Analysis tools
   ncdu
   duf
-  diskus
-  compsize
 
   # File managers
   ranger # Terminal
-  mc # Midnight Commander
-
-  # Recovery tools
-  testdisk
 
   # Monitoring
   smartmontools
   nvme-cli
-
-  # Benchmarking
-  fio
 ]

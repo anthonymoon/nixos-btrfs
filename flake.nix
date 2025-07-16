@@ -56,6 +56,8 @@
           ./modules/development.nix
           ./modules/virtualization.nix
           ./modules/filesystems.nix
+          ./modules/snapshots.nix
+          ./modules/maintenance.nix
 
           # Home Manager
           home-manager.nixosModules.home-manager
@@ -147,7 +149,7 @@
         echo ""
         echo "Note: You'll need to:"
         echo "1. Boot the image"
-        echo "2. Run the installer inside: curl -sL https://raw.githubusercontent.com/anthonymoon/nixos-zfsroot/main/install.sh | sudo bash"
+        echo "2. Run the installer inside: curl -sL https://raw.githubusercontent.com/anthonymoon/nixos-btrfs/main/install.sh | sudo bash"
         echo ""
         # Build a basic qcow2 with installer
         nix build nixpkgs#nixosConfigurations.installer.config.system.build.qcow2
@@ -161,7 +163,7 @@
         echo ""
         echo "Note: You'll need to:"
         echo "1. Import the VHDX into Hyper-V as Gen 2 VM"
-        echo "2. Run the installer inside: curl -sL https://raw.githubusercontent.com/anthonymoon/nixos-zfsroot/main/install.sh | sudo bash"
+        echo "2. Run the installer inside: curl -sL https://raw.githubusercontent.com/anthonymoon/nixos-btrfs/main/install.sh | sudo bash"
         echo ""
         # Build a basic VHDX with installer
         nix build nixpkgs#nixosConfigurations.installer.config.system.build.hypervImage
@@ -180,14 +182,14 @@
           echo "==============="
           echo ""
           echo "This will install NixOS with configuration from:"
-          echo "https://github.com/anthonymoon/nixos-zfsroot"
+          echo "https://github.com/anthonymoon/nixos-btrfs"
           echo ""
           echo "WARNING: This will ERASE the target disk!"
           echo ""
 
           # Default values
           DISK="''${1:-/dev/sda}"
-          FLAKE_URL="github:anthonymoon/nixos-zfsroot#nixos"
+          FLAKE_URL="github:anthonymoon/nixos-btrfs#nixos"
 
           # Show disk info
           echo "Target disk: $DISK"
@@ -227,7 +229,7 @@
           echo "Next steps:"
           echo "1. Reboot into your new system"
           echo "2. Set user password: passwd amoon"
-          echo "3. Deploy updates: sudo nixos-rebuild switch --flake github:anthonymoon/nixos-zfsroot#nixos"
+          echo "3. Deploy updates: sudo nixos-rebuild switch --flake github:anthonymoon/nixos-btrfs#nixos"
           echo ""
           echo "Enjoy your new NixOS system!"
         ''}/bin/nixos-installer";

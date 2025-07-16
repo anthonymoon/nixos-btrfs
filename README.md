@@ -43,23 +43,23 @@ A modular NixOS configuration following community standards with comprehensive s
 
 ```bash
 # Install with flake (requires experimental features)
-sudo nix --extra-experimental-features "nix-command flakes" run github:anthonymoon/nixos-zfsroot#install
+sudo nix --extra-experimental-features "nix-command flakes" run github:anthonymoon/nixos-btrfs#install
 
 # Or use curl installer
-curl -sL https://raw.githubusercontent.com/anthonymoon/nixos-zfsroot/main/install.sh | sudo bash
+curl -sL https://raw.githubusercontent.com/anthonymoon/nixos-btrfs/main/install.sh | sudo bash
 
 # Specify different disk (default is /dev/sda)
-sudo nix --extra-experimental-features "nix-command flakes" run github:anthonymoon/nixos-zfsroot#install -- /dev/nvme0n1
+sudo nix --extra-experimental-features "nix-command flakes" run github:anthonymoon/nixos-btrfs#install -- /dev/nvme0n1
 ```
 
 ### Manual Install
 
 ```bash
 # Partition and format
-sudo nix run github:nix-community/disko -- --mode disko --flake github:anthonymoon/nixos-zfsroot#nixos
+sudo nix run github:nix-community/disko -- --mode disko --flake github:anthonymoon/nixos-btrfs#nixos
 
 # Install
-sudo nixos-install --flake github:anthonymoon/nixos-zfsroot#nixos
+sudo nixos-install --flake github:anthonymoon/nixos-btrfs#nixos
 ```
 
 ## Disk Layout (Btrfs)

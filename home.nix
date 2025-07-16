@@ -66,12 +66,7 @@
   };
 
   home.packages = with pkgs;
-    [
-      btop
-      broot
-      nnn
-      xplr
-    ]
+    []
     ++ (import ./packages/development.nix {inherit pkgs;})
     ++ (import ./packages/browsers.nix {inherit pkgs;})
     ++ (import ./packages/communication.nix {inherit pkgs;})
