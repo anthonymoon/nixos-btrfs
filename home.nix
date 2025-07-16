@@ -47,7 +47,7 @@
     };
   };
 
-  # Terminal
+  # Terminal (option to use bleeding-edge Alacritty)
   programs.kitty = {
     enable = true;
     settings = {
@@ -57,6 +57,12 @@
       window_padding_width = 10;
     };
   };
+
+  # Alternative: bleeding-edge Alacritty
+  # programs.alacritty = {
+  #   enable = true;
+  #   package = pkgs.alacritty_git;
+  # };
 
   # Hyprland configuration
   wayland.windowManager.hyprland = {
@@ -255,9 +261,9 @@
     '';
   };
 
-  # Development tools
+  # Development tools with bleeding-edge packages
   home.packages = with pkgs; [
-    # Terminal tools
+    # Terminal tools (bleeding-edge versions)
     eza
     bat
     fd
@@ -265,27 +271,44 @@
     htop
     btop
     ncdu
-    # Development
+
+    # Development (bleeding-edge)
     vscode
     git-crypt
-    # Media
-    firefox
-    mpv
-    # Gaming (enhanced with Chaotic packages)
+    helix_git # Post-modern modal editor
+    zed-editor_git # High-performance multiplayer editor
+
+    # Media (bleeding-edge)
+    firefox_nightly # Latest Firefox features
+    mpv-vapoursynth # Enhanced mpv
+
+    # Gaming (Chaotic enhanced packages)
     steam
     lutris
     wine
-    discord
-    mangohud
+    discord-krisp # Discord with noise suppression
+    mangohud_git # Latest MangoHUD
+    gamescope_git # SteamOS compositor
+
     # System
     pavucontrol
     blueman
+    pwvucontrol_git # Pipewire volume control
+    openrgb_git # RGB lighting control
+
     # Wayland tools
     wofi
     grim
     slurp
     wl-clipboard
     mako
+
+    # Communication
+    telegram-desktop_git # Latest Telegram features
+
+    # System monitoring
+    nix-top_abandoned # Nix build monitoring
+
     # Fonts
     nerd-fonts.fira-code
   ];

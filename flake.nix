@@ -59,16 +59,41 @@
         users.amoon = import ./home.nix;
       };
 
-      # Boot configuration
+      # Boot configuration with CachyOS kernel
       boot.loader.systemd-boot.enable = true;
       boot.loader.efi.canTouchEfiVariables = true;
+
+      # CachyOS kernel for better performance
+      boot.kernelPackages = pkgs.linuxPackages_cachyos;
+
+      # Sched-ext scheduler support
+      services.scx = {
+        enable = true;
+        scheduler = "scx_rustland"; # Can also use scx_rusty, scx_lavd, etc.
+        package = pkgs.scx_git.full;
+      };
 
       # ZFS configuration
       boot.supportedFilesystems = ["zfs"];
       boot.zfs.forceImportRoot = false;
+      boot.zfs.requestEncryptionCredentials = false;
+      # Set a proper unique hostId (required for ZFS)
+      networking.hostId = "abcd1234";
+
+      # ZFS services
       services.zfs.autoScrub.enable = true;
       services.zfs.autoSnapshot.enable = true;
-      networking.hostId = "12345678"; # Required for ZFS
+
+      # ZFS boot optimizations
+      boot.kernelParams = [
+        "zfs.zfs_arc_max=2147483648" # 2GB ARC max for smaller systems
+      ];
+
+      # Ensure ZFS pool imports at boot
+      boot.zfs.extraPools = ["zroot"];
+
+      # Enable ZFS in initrd
+      boot.initrd.supportedFilesystems = ["zfs"];
 
       # Network configuration
       networking.networkmanager.enable = false;
@@ -105,11 +130,24 @@
       # Gaming support with Chaotic enhancements
       programs.steam.enable = true;
       programs.gamemode.enable = true;
+
+      # HDR support (experimental module from Chaotic)
+      chaotic.hdr.enable = true;
+
+      # Mesa Git for latest GPU drivers
+      chaotic.mesa-git.enable = true;
+      chaotic.mesa-git.extraPackages = with pkgs; [
+        intel-media-driver
+        vaapiIntel
+      ];
+
       hardware.opengl = {
         enable = true;
+        driSupport = true;
+        driSupport32Bit = true;
       };
 
-      # System packages
+      # System packages with Chaotic bleeding-edge versions
       environment.systemPackages = with pkgs; [
         # System tools
         git
@@ -118,31 +156,65 @@
         curl
         htop
         btop
-        # ZFS tools
+
+        # ZFS tools (with CachyOS optimizations)
         zfs
-        # Development tools
+        zfs_cachyos
+
+        # Development tools (bleeding-edge versions)
         fd
         ripgrep
         eza
         bat
         ncdu
-        # Gaming (enhanced with Chaotic packages)
+        helix_git # Post-modern modal editor
+
+        # Gaming (Chaotic enhanced packages)
         lutris
         wine
-        discord
-        # Chaotic packages for better performance
-        mangohud
-        gamemode
+        discord-krisp # Discord with noise suppression
+        mangohud_git # Latest MangoHUD
+        gamescope_git # SteamOS compositor
+
+        # Bleeding-edge browsers
+        firefox_nightly
+
+        # Performance tools
+        scx_git.full # sched-ext schedulers
+        ananicy-rules-cachyos_git
+
+        # Media tools
+        mpv-vapoursynth # Enhanced mpv with VapourSynth
+
+        # Communication
+        telegram-desktop_git
+
+        # System monitoring
+        mangohud_git
+        openrgb_git # RGB lighting control
       ];
 
-      # Nix configuration
+      # Advanced scheduler configuration
+      services.ananicy = {
+        enable = true;
+        package = pkgs.ananicy-cpp;
+        rulesProvider = pkgs.ananicy-rules-cachyos_git;
+      };
+
+      # Nix configuration with Chaotic binary cache
       nix.settings = {
         experimental-features = ["nix-command" "flakes"];
         auto-optimise-store = true;
+        # Binary cache is automatically configured by chaotic.nixosModules.default
       };
 
       # Allow unfree packages
       nixpkgs.config.allowUnfree = true;
+
+      # Additional Chaotic optimizations
+      chaotic.nyx.cache.enable = true;
+      chaotic.nyx.overlay.enable = true;
+      chaotic.nyx.registry.enable = true;
 
       # System version
       system.stateVersion = "24.05";
@@ -160,13 +232,22 @@
       services.spice-vdagentd.enable = true;
       boot.kernelModules = ["virtio_balloon" "virtio_console" "virtio_rng"];
 
-      # Graphics
+      # Graphics with bleeding-edge Mesa
       hardware.opengl.extraPackages = with pkgs; [
         mesa.drivers
       ];
 
       # Chaotic Nyx optimizations for VMs
       chaotic.mesa-git.enable = true;
+      chaotic.mesa-git.extraPackages = with pkgs; [
+        intel-media-driver
+      ];
+
+      # VM-specific gaming setup
+      environment.systemPackages = with pkgs; [
+        gamescope_git
+        mangohud_git
+      ];
     };
 
     hypervConfig = {
@@ -186,16 +267,33 @@
       pkgs,
       ...
     }: {
-      # AMD GPU support
+      # AMD GPU support with latest drivers
       hardware.opengl.extraPackages = with pkgs; [
-        rocm-opencl-icd
-        rocm-opencl-runtime
         amdvlk
       ];
       boot.kernelModules = ["amdgpu"];
 
-      # Chaotic Nyx optimizations for bare metal
+      # Advanced Chaotic Nyx optimizations for bare metal
       chaotic.mesa-git.enable = true;
+      chaotic.mesa-git.extraPackages = with pkgs; [
+        mesa_git.opencl
+      ];
+
+      # Gaming optimizations with CachyOS
+      programs.steam.package = pkgs.steam.override {
+        extraPkgs = pkgs:
+          with pkgs; [
+            mangohud_git
+            gamescope_git
+            gamemode
+          ];
+      };
+
+      # Enable Proton CachyOS
+      environment.systemPackages = with pkgs; [
+        proton-cachyos
+        luxtorpeda # Native Linux game engines
+      ];
     };
 
     # Disko ZFS configuration
@@ -242,17 +340,30 @@
               autotrim = "on";
             };
             rootFsOptions = {
-              compression = "lz4";
               acltype = "posixacl";
-              xattr = "sa";
-              relatime = "on";
+              canmount = "off";
+              dnodesize = "auto";
               normalization = "formD";
+              relatime = "on";
+              xattr = "sa";
+              mountpoint = "none";
             };
             datasets = {
+              # Root system container - canmount=noauto, mountpoint=legacy
               "root" = {
                 type = "zfs_fs";
+                options = {
+                  canmount = "noauto";
+                  mountpoint = "legacy";
+                };
+              };
+              # Actual root filesystem under the container
+              "root/nixos" = {
+                type = "zfs_fs";
                 mountpoint = "/";
-                options.compression = "lz4";
+                options = {
+                  compression = "lz4";
+                };
               };
               "home" = {
                 type = "zfs_fs";
@@ -268,18 +379,22 @@
                 options = {
                   compression = "zstd-6";
                   recordsize = "64k";
-                  dedup = "on";
                   atime = "off";
                 };
               };
               "persist" = {
                 type = "zfs_fs";
                 mountpoint = "/persist";
-                options.compression = "lz4";
+                options = {
+                  compression = "lz4";
+                };
               };
               "reserved" = {
                 type = "zfs_fs";
-                options.refreservation = "10G";
+                options = {
+                  refreservation = "10G";
+                  canmount = "off";
+                };
               };
             };
           };
