@@ -5,7 +5,7 @@ A modular NixOS configuration following community standards with comprehensive s
 ## Features
 
 - **Filesystem**: Btrfs with optimized subvolumes and compression
-- **Kernel**: Linux Libre (latest)
+- **Kernel**: Linux (latest)
 - **Desktop**: Hyprland with Waybar
 - **Services**: Complete media automation stack (Jellyfin, *arr services, Traefik)
 - **Gaming**: Steam, Proton, controller support, NVIDIA/AMD GPU drivers
