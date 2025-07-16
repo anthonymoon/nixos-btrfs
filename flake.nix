@@ -87,6 +87,8 @@
 
       # Network configuration
       networking.networkmanager.enable = false;
+      networking.useNetworkd = true;
+      networking.useDHCP = false;
       systemd.network = {
         enable = true;
         networks."10-ethernet" = {
