@@ -121,10 +121,9 @@
       programs.steam.enable = true;
       programs.gamemode.enable = true;
 
-      hardware.opengl = {
+      hardware.graphics = {
         enable = true;
-        driSupport = true;
-        driSupport32Bit = true;
+        enable32Bit = true;
       };
 
       # System packages (base installation)
@@ -182,7 +181,7 @@
       boot.kernelModules = ["virtio_balloon" "virtio_console" "virtio_rng"];
 
       # Graphics with bleeding-edge Mesa
-      hardware.opengl.extraPackages = with pkgs; [
+      hardware.graphics.extraPackages = with pkgs; [
         mesa.drivers
       ];
 
@@ -210,7 +209,7 @@
       ...
     }: {
       # AMD GPU support with latest drivers
-      hardware.opengl.extraPackages = with pkgs; [
+      hardware.graphics.extraPackages = with pkgs; [
         amdvlk
       ];
       boot.kernelModules = ["amdgpu"];
