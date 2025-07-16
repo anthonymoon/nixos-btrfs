@@ -23,11 +23,8 @@
 
     # Additional cache settings
     connect-timeout = 60;
-    download-timeout = 60;
-    stalled-download-timeout = 300;
 
     # Enable parallel downloads
-    http-connections = 25;
     max-substitution-jobs = 16;
   };
 
