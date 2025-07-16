@@ -11,7 +11,7 @@ with pkgs; [
   # Disk management
   gparted
   parted
-  gnome.gnome-disk-utility
+  gnome-disk-utility
 
   # Analysis tools
   ncdu
@@ -25,7 +25,6 @@ with pkgs; [
 
   # Recovery tools
   testdisk
-  photorec
 
   # Monitoring
   smartmontools

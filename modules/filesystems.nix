@@ -22,13 +22,12 @@
       apfsprogs
       gparted
       parted
-      gnome.gnome-disk-utility
+      gnome-disk-utility
       ncdu
       duf
       diskus
       compsize
       testdisk
-      photorec
       smartmontools
       nvme-cli
       fio
