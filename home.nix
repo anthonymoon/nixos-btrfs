@@ -262,56 +262,96 @@
   };
 
   # Development tools with bleeding-edge packages
-  home.packages = with pkgs; [
-    # Terminal tools (bleeding-edge versions)
-    eza
-    bat
-    fd
-    ripgrep
-    htop
-    btop
-    ncdu
+  home.packages = with pkgs;
+    [
+      # Terminal tools (bleeding-edge versions)
+      eza
+      bat
+      fd
+      ripgrep
+      htop
+      btop
+      ncdu
 
-    # Development (bleeding-edge)
-    vscode
-    git-crypt
-    helix_git # Post-modern modal editor
-    zed-editor_git # High-performance multiplayer editor
+      # Development
+      vscode
+      git-crypt
+      (
+        if (builtins.hasAttr "helix_git" pkgs)
+        then helix_git
+        else helix
+      ) # Modal editor
+      (
+        if (builtins.hasAttr "zed-editor_git" pkgs)
+        then zed-editor_git
+        else zed-editor
+      ) # High-performance editor
 
-    # Media (bleeding-edge)
-    firefox_nightly # Latest Firefox features
-    mpv-vapoursynth # Enhanced mpv
+      # Media
+      (
+        if (builtins.hasAttr "firefox_nightly" pkgs)
+        then firefox_nightly
+        else firefox
+      ) # Web browser
+      mpv-vapoursynth # Enhanced mpv
 
-    # Gaming (Chaotic enhanced packages)
-    steam
-    lutris
-    wine
-    discord-krisp # Discord with noise suppression
-    mangohud_git # Latest MangoHUD
-    gamescope_git # SteamOS compositor
+      # Gaming
+      steam
+      lutris
+      wine
+      (
+        if (builtins.hasAttr "discord-krisp" pkgs)
+        then discord-krisp
+        else discord
+      ) # Chat with noise suppression
 
-    # System
-    pavucontrol
-    blueman
-    pwvucontrol_git # Pipewire volume control
-    openrgb_git # RGB lighting control
+      # System
+      pavucontrol
+      blueman
 
-    # Wayland tools
-    wofi
-    grim
-    slurp
-    wl-clipboard
-    mako
+      # Wayland tools
+      wofi
+      grim
+      slurp
+      wl-clipboard
+      mako
 
-    # Communication
-    telegram-desktop_git # Latest Telegram features
+      # Communication
+      (
+        if (builtins.hasAttr "telegram-desktop_git" pkgs)
+        then telegram-desktop_git
+        else telegram-desktop
+      ) # Telegram
 
-    # System monitoring
-    nix-top_abandoned # Nix build monitoring
+      # System monitoring
+      nix-top_abandoned # Nix build monitoring
 
-    # Fonts
-    nerd-fonts.fira-code
-  ];
+      # Fonts
+      nerd-fonts.fira-code
+    ]
+    ++ (builtins.filter (pkg: pkg != null) [
+      # Chaotic packages (only available with chaotic overlay)
+      (
+        if (builtins.hasAttr "mangohud_git" pkgs)
+        then pkgs.mangohud_git
+        else null
+      )
+      (
+        if (builtins.hasAttr "gamescope_git" pkgs)
+        then pkgs.gamescope_git
+        else null
+      )
+      (
+        if (builtins.hasAttr "pwvucontrol_git" pkgs)
+        then pkgs.pwvucontrol_git
+        else null
+      )
+      (
+        if (builtins.hasAttr "openrgb_git" pkgs)
+        then pkgs.openrgb_git
+        else null
+      )
+    ]);
 
   # XDG configuration
   xdg.enable = true;
