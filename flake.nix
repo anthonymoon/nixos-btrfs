@@ -59,6 +59,10 @@
         users.amoon = import ./home.nix;
       };
 
+      # Boot configuration
+      boot.loader.systemd-boot.enable = true;
+      boot.loader.efi.canTouchEfiVariables = true;
+
       # ZFS configuration
       boot.supportedFilesystems = ["zfs"];
       boot.zfs.forceImportRoot = false;
@@ -137,6 +141,9 @@
         auto-optimise-store = true;
       };
 
+      # Allow unfree packages
+      nixpkgs.config.allowUnfree = true;
+
       # System version
       system.stateVersion = "24.05";
     };
@@ -160,7 +167,6 @@
 
       # Chaotic Nyx optimizations for VMs
       chaotic.mesa-git.enable = true;
-      chaotic.scx.enable = true;
     };
 
     hypervConfig = {
@@ -190,7 +196,6 @@
 
       # Chaotic Nyx optimizations for bare metal
       chaotic.mesa-git.enable = true;
-      chaotic.scx.enable = true;
     };
 
     # Disko ZFS configuration
@@ -346,23 +351,31 @@
         }).config.system.build.isoImage;
 
       # QEMU image
-      qemu-image = pkgs.writeScript "build-qemu-image" ''
-        #!${pkgs.bash}/bin/bash
-        echo "Building QEMU image..."
+      qemu-image =
+        (nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            "${nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix"
+            disko.nixosModules.disko
+            chaotic.nixosModules.default
+            diskoConfig
+            baseConfig
+            qemuConfig
+            {
+              virtualisation.diskSize = 20480; # 20GB
+              virtualisation.memorySize = 4096; # 4GB RAM
+            }
+          ];
+        }).config.system.build.vm;
 
-        # Create a simple disk image
-        ${pkgs.qemu}/bin/qemu-img create -f qcow2 nixos-qemu.qcow2 20G
-
-        echo "QEMU image created: nixos-qemu.qcow2"
-        echo "Use: qemu-system-x86_64 -enable-kvm -m 4096 -drive file=nixos-qemu.qcow2,if=virtio"
-      '';
-
-      # HyperV image
+      # HyperV VHD image
       hyperv-image =
         (nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
             "${nixpkgs}/nixos/modules/virtualisation/hyperv-image.nix"
+            disko.nixosModules.disko
+            diskoConfig
             baseConfig
             hypervConfig
           ];
