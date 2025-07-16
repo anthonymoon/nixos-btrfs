@@ -195,11 +195,17 @@
 
     # Disko ZFS configuration
     diskoConfig = {
+      config,
+      lib,
+      ...
+    }: let
+      diskDevice = lib.mkDefault "/dev/disk/by-id/PLACEHOLDER";
+    in {
       disko.devices = {
         disk = {
           main = {
             type = "disk";
-            device = "/dev/disk/by-id/PLACEHOLDER";
+            device = diskDevice;
             content = {
               type = "gpt";
               partitions = {
@@ -415,13 +421,24 @@
 
         echo "Using device: $DEVICE_PATH"
 
+        # Create temporary flake with correct device
+        TEMP_DIR=$(mktemp -d)
+        cd "$TEMP_DIR"
+
+        # Clone the repo and modify device
+        git clone https://github.com/anthonymoon/nixos-zfsroot.git .
+        sed -i "s|/dev/disk/by-id/PLACEHOLDER|$DEVICE_PATH|g" flake.nix
+
         # Install using disko
         sudo nix --extra-experimental-features "nix-command flakes" run github:nix-community/disko -- --mode disko \
-          --arg device '"'"$DEVICE_PATH"'"' \
-          --flake "github:anthonymoon/nixos-zfsroot#nixos-$PLATFORM"
+          --flake ".#nixos-$PLATFORM"
 
         # Install NixOS
-        sudo nixos-install --flake "github:anthonymoon/nixos-zfsroot#nixos-$PLATFORM"
+        sudo nixos-install --flake ".#nixos-$PLATFORM"
+
+        # Cleanup
+        cd /
+        rm -rf "$TEMP_DIR"
 
         echo "Installation complete! Reboot to start your new system."
       '';
