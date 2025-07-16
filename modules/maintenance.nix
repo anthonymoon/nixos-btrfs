@@ -132,16 +132,7 @@
     };
   };
 
-  # Enable Btrfs auto-defrag
-  fileSystems =
-    lib.mapAttrs (
-      name: fs:
-        fs
-        // lib.optionalAttrs (fs.fsType == "btrfs") {
-          options = fs.options ++ ["autodefrag"];
-        }
-    )
-    config.fileSystems;
+  # Note: Btrfs auto-defrag should be added to disk-config.nix mount options
 
   # Nix store optimization
   nix.optimise = {

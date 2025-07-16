@@ -33,27 +33,27 @@
                 subvolumes = {
                   "@" = {
                     mountpoint = "/";
-                    mountOptions = ["compress=zstd:3" "noatime" "ssd" "space_cache=v2" "discard=async"];
+                    mountOptions = ["compress=zstd:3" "noatime" "ssd" "space_cache=v2" "discard=async" "autodefrag"];
                   };
                   "@home" = {
                     mountpoint = "/home";
-                    mountOptions = ["compress=zstd:3" "noatime" "ssd" "space_cache=v2" "discard=async"];
+                    mountOptions = ["compress=zstd:3" "noatime" "ssd" "space_cache=v2" "discard=async" "autodefrag"];
                   };
                   "@nix" = {
                     mountpoint = "/nix";
-                    mountOptions = ["compress=zstd:6" "noatime" "ssd" "space_cache=v2" "discard=async"];
+                    mountOptions = ["compress=zstd:6" "noatime" "ssd" "space_cache=v2" "discard=async" "autodefrag"];
                   };
                   "@var" = {
                     mountpoint = "/var";
-                    mountOptions = ["compress=zstd:3" "noatime" "ssd" "space_cache=v2" "discard=async"];
+                    mountOptions = ["compress=zstd:3" "noatime" "ssd" "space_cache=v2" "discard=async" "autodefrag"];
                   };
                   "@tmp" = {
                     mountpoint = "/tmp";
-                    mountOptions = ["compress=zstd:1" "noatime" "ssd" "space_cache=v2" "discard=async"];
+                    mountOptions = ["compress=zstd:1" "noatime" "ssd" "space_cache=v2" "discard=async" "autodefrag"];
                   };
                   "@snapshots" = {
                     mountpoint = "/.snapshots";
-                    mountOptions = ["compress=zstd:3" "noatime" "ssd" "space_cache=v2" "discard=async"];
+                    mountOptions = ["compress=zstd:3" "noatime" "ssd" "space_cache=v2" "discard=async" "autodefrag"];
                   };
                 };
               };
