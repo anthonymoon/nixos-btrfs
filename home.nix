@@ -278,21 +278,55 @@
 
     # Development
     vscode
+    vscode-insiders
     git-crypt
     helix # Modal editor
     evil-helix # Helix with evil mode
     neovim
     zed-editor # High-performance collaborative editor
 
+    # Cloud and DevOps
+    terraform
+    google-cloud-sdk
+    kubectl
+    kubernetes-helm
+
+    # Programming languages
+    python312
+    python312Packages.pip
+    python312Packages.virtualenv
+    nodejs_20
+    rustup
+
+    # Browsers
+    thorium
+    microsoft-edge
+    tor-browser-bundle-bin
+    zen-browser
+
     # Media
-    firefox
     mpv
+    ffmpeg-full
     pavucontrol
+    cava # Audio visualizer
+
+    # Audio processing
+    rnnoise
+    noisetorch
 
     # System tools
     blueman
     compsize # Btrfs compression analyzer
     snapper # Snapshot management
+
+    # Gaming tools (if gaming stack is enabled)
+    gamescope
+    mangohud
+    goverlay
+
+    # System monitoring
+    nvtop
+    radeontop
 
     # Wayland tools
     wofi
@@ -304,6 +338,10 @@
 
     # Communication
     telegram-desktop
+    slack
+    signal-desktop
+    whatsappforlinux
+    discord
 
     # Fonts
     nerd-fonts.fira-code

@@ -119,7 +119,6 @@
         ncdu
 
         # Media tools
-        firefox
         mpv
       ];
 
@@ -493,6 +492,73 @@
             # Enable Docker for additional services
             virtualisation.docker.enable = true;
             users.users.amoon.extraGroups = ["docker"];
+          })
+        ];
+      };
+
+      # Gaming workstation with proprietary drivers and full software stack
+      nixos-gaming = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          disko.nixosModules.disko
+          ./disko-config-btrfs.nix
+          ./hardware-configuration-btrfs.nix
+          ./gaming-stack.nix
+          baseConfig
+          ({
+            config,
+            pkgs,
+            ...
+          }: {
+            # Use latest kernel with all features
+            boot.kernelPackages = pkgs.linuxPackages_latest;
+
+            # Gaming workstation settings
+            networking.hostName = "nixos-gaming";
+
+            # Allow all unfree packages
+            nixpkgs.config.allowUnfree = true;
+
+            # Enable redistributable firmware for hardware support
+            hardware.enableRedistributableFirmware = true;
+
+            # Additional gaming optimizations
+            boot.kernel.sysctl = {
+              "vm.max_map_count" = 2147483642; # For some games
+              "fs.file-max" = 524288;
+            };
+          })
+        ];
+      };
+
+      # Gaming VM configuration for QEMU/KVM
+      nixos-qemu-gaming = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          disko.nixosModules.disko
+          ./disko-config-btrfs.nix
+          ./hardware-configuration-btrfs.nix
+          ./gaming-stack.nix
+          baseConfig
+          qemuConfig
+          ({
+            config,
+            pkgs,
+            ...
+          }: {
+            # Use latest kernel
+            boot.kernelPackages = pkgs.linuxPackages_latest;
+
+            # Gaming VM settings
+            networking.hostName = "nixos-gaming-vm";
+
+            # Allow unfree packages
+            nixpkgs.config.allowUnfree = true;
+            hardware.enableRedistributableFirmware = true;
+
+            # GPU passthrough support
+            boot.kernelParams = ["intel_iommu=on" "iommu=pt"];
+            boot.kernelModules = ["vfio" "vfio_iommu_type1" "vfio_pci" "vfio_virqfd"];
           })
         ];
       };
