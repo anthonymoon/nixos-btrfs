@@ -421,6 +421,9 @@
 
         echo "Using device: $DEVICE_PATH"
 
+        # Load ZFS modules
+        sudo modprobe zfs
+
         # Create temporary flake with correct device
         TEMP_DIR=$(mktemp -d)
         cd "$TEMP_DIR"
