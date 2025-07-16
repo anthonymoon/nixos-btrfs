@@ -58,6 +58,7 @@
           ./modules/filesystems.nix
           ./modules/snapshots.nix
           ./modules/maintenance.nix
+          ./modules/binary-cache.nix
 
           # Home Manager
           home-manager.nixosModules.home-manager
