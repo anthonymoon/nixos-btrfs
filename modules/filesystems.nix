@@ -14,8 +14,6 @@
     "vfat"
   ];
 
-  boot.kernelPackages = pkgs.linuxKernel.packages.linux_latest_libre;
-
   environment.systemPackages = with pkgs;
     [
       ntfs3g

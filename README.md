@@ -112,6 +112,24 @@ nix fmt
 nix develop
 ```
 
+### Building Images
+```bash
+# Build ISO installer
+nix build .#iso
+# Result will be in result/iso/
+
+# Build QEMU VM
+nix build .#vm
+# Run with: ./result/bin/run-nixos-vm
+
+# Quick VM test
+nix run .#run-vm
+
+# Build VirtualBox image
+nix build .#virtualbox
+# Result will be in result/
+```
+
 ## Configuration Details
 
 - **Hostname**: deadbeef

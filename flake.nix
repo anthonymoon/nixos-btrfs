@@ -103,6 +103,46 @@
     # Formatter
     formatter.${system} = pkgs.alejandra;
 
+    # Packages for building images
+    packages.${system} = {
+      # ISO image
+      iso =
+        (nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+            {
+              nixpkgs.hostPlatform = system;
+              isoImage.squashfsCompression = "zstd -Xcompression-level 6";
+
+              environment.systemPackages = with pkgs; [
+                git
+                curl
+                wget
+                vim
+              ];
+
+              # Include installer script
+              environment.etc."installer/install.sh".source = ./install.sh;
+
+              # Enable SSH in installer
+              services.openssh.enable = true;
+
+              # Set root password for installer (change this!)
+              users.users.root.initialHashedPassword = "";
+
+              system.stateVersion = "24.05";
+            }
+          ];
+        }).config.system.build.isoImage;
+
+      # QEMU VM image
+      vm = self.nixosConfigurations.nixos.config.system.build.vm;
+
+      # VirtualBox OVA
+      virtualbox = self.nixosConfigurations.nixos.config.system.build.virtualBoxOVA;
+    };
+
     # Apps for direct execution
     apps.${system} = {
       install = {
@@ -166,6 +206,11 @@
           echo ""
           echo "Enjoy your new NixOS system!"
         ''}/bin/nixos-installer";
+      };
+
+      run-vm = {
+        type = "app";
+        program = "${self.nixosConfigurations.nixos.config.system.build.vm}/bin/run-nixos-vm";
       };
     };
   };
