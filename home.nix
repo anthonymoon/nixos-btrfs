@@ -300,6 +300,7 @@
     slurp
     wl-clipboard
     mako
+    xdg-desktop-portal-wlr # Screen sharing and desktop portal for wlroots
 
     # Communication
     telegram-desktop
