@@ -400,12 +400,23 @@
 
         echo "Deploying NixOS with ZFS to $DISK (platform: $PLATFORM)"
 
-        # Update disko configuration with actual disk
-        export DISK_ID=$(ls -la /dev/disk/by-id/ | grep "$(basename "$DISK")" | head -1 | awk '{print $9}')
+        # Find disk ID or use direct path
+        if [[ -d /dev/disk/by-id ]]; then
+          DISK_ID=$(ls -la /dev/disk/by-id/ | grep "$(basename "$DISK")" | head -1 | awk '{print $9}' || echo "")
+          if [[ -n "$DISK_ID" ]]; then
+            DEVICE_PATH="/dev/disk/by-id/$DISK_ID"
+          else
+            DEVICE_PATH="$DISK"
+          fi
+        else
+          DEVICE_PATH="$DISK"
+        fi
+
+        echo "Using device: $DEVICE_PATH"
 
         # Install using disko
         sudo nix --extra-experimental-features "nix-command flakes" run github:nix-community/disko -- --mode disko \
-          --arg device '"'"/dev/disk/by-id/$DISK_ID"'"' \
+          --arg device '"'"$DEVICE_PATH"'"' \
           --flake "github:anthonymoon/nixos-zfsroot#nixos-$PLATFORM"
 
         # Install NixOS
