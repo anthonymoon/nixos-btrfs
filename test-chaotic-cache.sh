@@ -13,13 +13,23 @@ else
     exit 1
 fi
 
-# Test a simple chaotic package
+# Test base configuration
 echo ""
-echo "🔍 Testing Chaotic package availability..."
-if nix eval .#nixosConfigurations.nixos-dev.config.environment.systemPackages --json | grep -q "firefox_nightly"; then
-    echo "✅ Chaotic packages are available in configuration"
+echo "🔍 Testing base configuration..."
+if nix eval .#nixosConfigurations.nixos-dev.config.environment.systemPackages --json >/dev/null 2>&1; then
+    echo "✅ Base configuration builds successfully"
 else
-    echo "❌ Chaotic packages not found in configuration"
+    echo "❌ Base configuration has errors"
+    exit 1
+fi
+
+# Test Chaotic configuration
+echo ""
+echo "🔍 Testing Chaotic configuration..."
+if nix eval .#nixosConfigurations.nixos-dev-chaotic.config.environment.systemPackages --json | grep -q "firefox_nightly"; then
+    echo "✅ Chaotic packages are available in chaotic configuration"
+else
+    echo "❌ Chaotic packages not found in chaotic configuration"
     exit 1
 fi
 
@@ -47,9 +57,10 @@ echo ""
 echo "🏁 Chaotic Nyx configuration test complete!"
 echo ""
 echo "📋 Next steps:"
-echo "1. Run 'sudo nixos-rebuild switch --flake .#nixos-dev' to apply configuration"
-echo "2. After rebuild, the binary cache will be automatically configured"
-echo "3. Subsequent builds should be much faster using the binary cache"
+echo "1. Stage 1: Install base system with 'sudo nixos-install --flake .#nixos-dev'"
+echo "2. Reboot into the new system"
+echo "3. Stage 2: Switch to Chaotic with 'sudo nixos-rebuild switch --flake .#nixos-dev-chaotic'"
+echo "4. Subsequent builds will use the binary cache for faster updates"
 echo ""
 echo "🎮 Gaming optimizations included:"
 echo "   - CachyOS kernel with BORE scheduler"

@@ -59,19 +59,9 @@
         users.amoon = import ./home.nix;
       };
 
-      # Boot configuration with CachyOS kernel
+      # Boot configuration
       boot.loader.systemd-boot.enable = true;
       boot.loader.efi.canTouchEfiVariables = true;
-
-      # CachyOS kernel for better performance
-      boot.kernelPackages = pkgs.linuxPackages_cachyos;
-
-      # Sched-ext scheduler support
-      services.scx = {
-        enable = true;
-        scheduler = "scx_rustland"; # Can also use scx_rusty, scx_lavd, etc.
-        package = pkgs.scx_git.full;
-      };
 
       # ZFS configuration
       boot.supportedFilesystems = ["zfs"];
@@ -127,19 +117,9 @@
         };
       };
 
-      # Gaming support with Chaotic enhancements
+      # Gaming support
       programs.steam.enable = true;
       programs.gamemode.enable = true;
-
-      # HDR support (experimental module from Chaotic)
-      chaotic.hdr.enable = true;
-
-      # Mesa Git for latest GPU drivers
-      chaotic.mesa-git.enable = true;
-      chaotic.mesa-git.extraPackages = with pkgs; [
-        intel-media-driver
-        vaapiIntel
-      ];
 
       hardware.opengl = {
         enable = true;
@@ -147,7 +127,7 @@
         driSupport32Bit = true;
       };
 
-      # System packages with Chaotic bleeding-edge versions
+      # System packages (base installation)
       environment.systemPackages = with pkgs; [
         # System tools
         git
@@ -157,64 +137,33 @@
         htop
         btop
 
-        # ZFS tools (with CachyOS optimizations)
+        # ZFS tools
         zfs
-        zfs_cachyos
 
-        # Development tools (bleeding-edge versions)
+        # Development tools
         fd
         ripgrep
         eza
         bat
         ncdu
-        helix_git # Post-modern modal editor
 
-        # Gaming (Chaotic enhanced packages)
+        # Gaming (basic packages)
         lutris
         wine
-        discord-krisp # Discord with noise suppression
-        mangohud_git # Latest MangoHUD
-        gamescope_git # SteamOS compositor
-
-        # Bleeding-edge browsers
-        firefox_nightly
-
-        # Performance tools
-        scx_git.full # sched-ext schedulers
-        ananicy-rules-cachyos_git
 
         # Media tools
-        mpv-vapoursynth # Enhanced mpv with VapourSynth
-
-        # Communication
-        telegram-desktop_git
-
-        # System monitoring
-        mangohud_git
-        openrgb_git # RGB lighting control
+        firefox
+        mpv
       ];
 
-      # Advanced scheduler configuration
-      services.ananicy = {
-        enable = true;
-        package = pkgs.ananicy-cpp;
-        rulesProvider = pkgs.ananicy-rules-cachyos_git;
-      };
-
-      # Nix configuration with Chaotic binary cache
+      # Nix configuration
       nix.settings = {
         experimental-features = ["nix-command" "flakes"];
         auto-optimise-store = true;
-        # Binary cache is automatically configured by chaotic.nixosModules.default
       };
 
       # Allow unfree packages
       nixpkgs.config.allowUnfree = true;
-
-      # Additional Chaotic optimizations
-      chaotic.nyx.cache.enable = true;
-      chaotic.nyx.overlay.enable = true;
-      chaotic.nyx.registry.enable = true;
 
       # System version
       system.stateVersion = "24.05";
@@ -237,16 +186,9 @@
         mesa.drivers
       ];
 
-      # Chaotic Nyx optimizations for VMs
-      chaotic.mesa-git.enable = true;
-      chaotic.mesa-git.extraPackages = with pkgs; [
-        intel-media-driver
-      ];
-
-      # VM-specific gaming setup
+      # VM-specific packages
       environment.systemPackages = with pkgs; [
-        gamescope_git
-        mangohud_git
+        # Add any VM specific packages here
       ];
     };
 
@@ -273,26 +215,9 @@
       ];
       boot.kernelModules = ["amdgpu"];
 
-      # Advanced Chaotic Nyx optimizations for bare metal
-      chaotic.mesa-git.enable = true;
-      chaotic.mesa-git.extraPackages = with pkgs; [
-        mesa_git.opencl
-      ];
-
-      # Gaming optimizations with CachyOS
-      programs.steam.package = pkgs.steam.override {
-        extraPkgs = pkgs:
-          with pkgs; [
-            mangohud_git
-            gamescope_git
-            gamemode
-          ];
-      };
-
-      # Enable Proton CachyOS
+      # Additional packages for bare metal
       environment.systemPackages = with pkgs; [
-        proton-cachyos
-        luxtorpeda # Native Linux game engines
+        # Add any bare metal specific packages here
       ];
     };
 
@@ -409,10 +334,55 @@
         inherit system;
         modules = [
           disko.nixosModules.disko
-          chaotic.nixosModules.default
           diskoConfig
           baseConfig
           baremetalConfig
+        ];
+      };
+
+      # Bare metal configuration with Chaotic Nyx (use AFTER base installation)
+      nixos-dev-chaotic = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          chaotic.nixosModules.default
+          baseConfig
+          baremetalConfig
+          ({
+            config,
+            lib,
+            pkgs,
+            ...
+          }: {
+            # Chaotic Nyx bleeding-edge configuration
+            boot.kernelPackages = pkgs.linuxPackages_cachyos;
+
+            services.scx = {
+              enable = true;
+              scheduler = "scx_rustland";
+              package = pkgs.scx_git.full;
+            };
+
+            chaotic.hdr.enable = true;
+            chaotic.mesa-git.enable = true;
+            chaotic.mesa-git.extraPackages = with pkgs; [
+              intel-media-driver
+              vaapiIntel
+            ];
+
+            services.ananicy = {
+              enable = true;
+              package = pkgs.ananicy-cpp;
+              rulesProvider = pkgs.ananicy-rules-cachyos_git;
+            };
+
+            chaotic.nyx.cache.enable = true;
+            chaotic.nyx.overlay.enable = true;
+            chaotic.nyx.registry.enable = true;
+
+            environment.systemPackages = with pkgs; [
+              firefox_nightly
+            ];
+          })
         ];
       };
 
@@ -421,10 +391,37 @@
         inherit system;
         modules = [
           disko.nixosModules.disko
-          chaotic.nixosModules.default
           diskoConfig
           baseConfig
           qemuConfig
+        ];
+      };
+
+      # QEMU/KVM configuration with Chaotic Nyx (use AFTER base installation)
+      nixos-qemu-chaotic = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          chaotic.nixosModules.default
+          baseConfig
+          qemuConfig
+          ({
+            config,
+            lib,
+            pkgs,
+            ...
+          }: {
+            # Chaotic Nyx configuration for VMs
+            chaotic.mesa-git.enable = true;
+            chaotic.nyx.cache.enable = true;
+            chaotic.nyx.overlay.enable = true;
+            chaotic.nyx.registry.enable = true;
+
+            environment.systemPackages = with pkgs; [
+              gamescope_git
+              mangohud_git
+              firefox_nightly
+            ];
+          })
         ];
       };
 
@@ -472,7 +469,6 @@
           modules = [
             "${nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix"
             disko.nixosModules.disko
-            chaotic.nixosModules.default
             diskoConfig
             baseConfig
             qemuConfig
