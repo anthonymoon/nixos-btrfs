@@ -404,12 +404,12 @@
         export DISK_ID=$(ls -la /dev/disk/by-id/ | grep "$(basename "$DISK")" | head -1 | awk '{print $9}')
 
         # Install using disko
-        sudo nix run github:nix-community/disko -- --mode disko \
+        sudo nix --extra-experimental-features "nix-command flakes" run github:nix-community/disko -- --mode disko \
           --arg device '"'"/dev/disk/by-id/$DISK_ID"'"' \
-          --flake ".#nixos-$PLATFORM"
+          --flake "github:anthonymoon/nixos-zfsroot#nixos-$PLATFORM"
 
         # Install NixOS
-        sudo nixos-install --flake ".#nixos-$PLATFORM"
+        sudo nixos-install --flake "github:anthonymoon/nixos-zfsroot#nixos-$PLATFORM"
 
         echo "Installation complete! Reboot to start your new system."
       '';
