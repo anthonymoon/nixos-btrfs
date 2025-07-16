@@ -8,16 +8,19 @@ repos:
         files: \.nix$
         pass_filenames: true
         
+      # Validation hooks - skip with SKIP=nix-flake-check,nix-eval-check git commit
       - id: nix-flake-check
-        name: Nix flake check
+        name: Nix flake check (skip with SKIP=nix-flake-check)
         entry: bash -c 'if [[ $(git diff --cached --name-only | grep -E "\.(nix|lock)$") ]]; then nix flake check --no-write-lock-file; fi'
         language: system
         pass_filenames: false
         always_run: true
+        stages: [commit]
         
       - id: nix-eval-check
-        name: Check nixos config evaluation
+        name: Check nixos config evaluation (skip with SKIP=nix-eval-check)
         entry: bash -c 'if [[ $(git diff --cached --name-only | grep -E "\.(nix)$") ]]; then nix eval .#nixosConfigurations.nixos.config.system.build.toplevel.drvPath --no-write-lock-file >/dev/null; fi'
         language: system
         pass_filenames: false
         always_run: true
+        stages: [commit]

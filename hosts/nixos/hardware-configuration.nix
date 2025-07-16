@@ -8,12 +8,16 @@
   imports = [(modulesPath + "/installer/scan/not-detected.nix")];
 
   boot.initrd.availableKernelModules = ["xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod"];
-  boot.initrd.kernelModules = [];
+  boot.initrd.kernelModules = ["btrfs"];
   boot.kernelModules = ["kvm-amd" "kvm-intel"];
   boot.extraModulePackages = [];
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+
+  # Ensure Btrfs support
+  boot.supportedFilesystems = ["btrfs"];
+  boot.initrd.supportedFilesystems = ["btrfs"];
 
   boot.kernelPackages = pkgs.linuxPackages; # Use stable kernel for NVIDIA compatibility
 
