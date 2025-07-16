@@ -1,4 +1,4 @@
-# Hardware configuration for QEMU VM with rpool
+# Hardware configuration merging disko setup with existing config
 {
   config,
   lib,
@@ -18,31 +18,38 @@
     supportedFilesystems = ["zfs"];
     zfs.forceImportRoot = true;
     zfs.requestEncryptionCredentials = false;
-    zfs.extraPools = ["rpool"]; # Import rpool at boot
 
     initrd = {
-      availableKernelModules = ["virtio_pci" "virtio_blk" "virtio_net" "virtio_balloon"];
+      availableKernelModules = ["xhci_pci" "ahci" "usb_storage" "usbhid" "sd_mod"];
       kernelModules = ["virtio"];
       supportedFilesystems = ["zfs"];
     };
 
     kernelParams = [
-      "console=ttyS0,115200" # QEMU serial console
-      "zfs.zfs_arc_max=1073741824" # 1GB ARC max for VM
+      "mitigations=off"
+      "zfs.zfs_arc_max=2147483648" # 2GB ARC max
     ];
 
     kernelModules = [
-      "virtio_balloon"
-      "virtio_console"
-      "virtio_rng"
+      "kvm-amd"
+      "xt_socket"
+      "vhost-net"
+      "bridge"
+      "br_netfilter"
     ];
 
     extraModulePackages = [];
     kernelPackages = config.boot.zfs.package.latestCompatibleLinuxPackages;
+
+    kernel = {
+      sysctl."net.ipv4.ip_forward" = 1;
+    };
   };
 
-  # Filesystem configuration for rpool
-  fileSystems = {
+  # Choose one of these filesystem configurations based on your pool name:
+
+  # Option 1: If using 'rpool' (from the hardware config you provided)
+  fileSystems = lib.mkIf (config.networking.hostName == "with-rpool") {
     "/" = {
       device = "rpool/local/root";
       fsType = "zfs";
@@ -75,7 +82,32 @@
     };
   };
 
-  # Swap configuration
+  # Option 2: If using 'zroot' (from your current config)
+  fileSystems = lib.mkIf (config.networking.hostName != "with-rpool") {
+    "/" = {
+      device = "zroot/root/nixos";
+      fsType = "zfs";
+      options = ["zfsutil"];
+    };
+    "/boot" = {
+      device = "/dev/disk/by-label/EFI";
+      fsType = "vfat";
+    };
+    "/home" = {
+      device = "zroot/home";
+      fsType = "zfs";
+    };
+    "/nix" = {
+      device = "zroot/nix";
+      fsType = "zfs";
+    };
+    "/persist" = {
+      device = "zroot/persist";
+      fsType = "zfs";
+    };
+  };
+
+  # Swap configuration - adjust based on your setup
   swapDevices = lib.optional (builtins.pathExists "/dev/disk/by-label/swap") {
     device = "/dev/disk/by-label/swap";
   };
@@ -85,29 +117,34 @@
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
-  # QEMU guest configuration
-  virtualisation.qemu.guestAgent.enable = true;
-
   hardware = {
+    cpu.amd.updateMicrocode = true;
     enableRedistributableFirmware = true;
-    graphics = {
-      enable = true;
-      extraPackages = with pkgs; [
-        mesa.drivers
-      ];
+    graphics.enable = true;
+
+    # NVIDIA configuration
+    nvidia = {
+      package = config.boot.kernelPackages.nvidiaPackages.latest;
+      powerManagement.enable = true;
+      open = false;
+      modesetting.enable = true;
     };
   };
 
   services = {
-    # QEMU guest services
-    qemuGuest.enable = true;
-    spice-vdagentd.enable = true;
+    fstrim.enable = true;
+    blueman.enable = true;
 
     # ZFS services
     zfs.autoScrub.enable = true;
     zfs.autoSnapshot.enable = true;
-
-    # Disable services not needed in VM
-    fstrim.enable = false;
   };
+
+  # Allow NVIDIA packages
+  nixpkgs.config.allowUnfreePredicate = pkg:
+    builtins.elem (lib.getName pkg) [
+      "nvidia-x11"
+      "nvidia"
+      "nvidia-settings"
+    ];
 }
