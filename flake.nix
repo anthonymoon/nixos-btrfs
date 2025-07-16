@@ -459,6 +459,44 @@
         ];
       };
 
+      # Media server configuration with Btrfs and arr stack
+      nixos-media-server = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          disko.nixosModules.disko
+          ./disko-config-btrfs.nix
+          ./hardware-configuration-btrfs.nix
+          ./media-stack.nix
+          baseConfig
+          qemuConfig
+          ({
+            config,
+            pkgs,
+            ...
+          }: {
+            # Override kernel to use latest libre
+            boot.kernelPackages = pkgs.linuxKernel.packages.linux_latest_libre;
+
+            # Media server specific settings
+            networking.hostName = "nixos-media";
+
+            # Allow unfree for media codecs
+            nixpkgs.config.allowUnfree = true;
+
+            # Additional packages for media server
+            environment.systemPackages = with pkgs; [
+              docker
+              docker-compose
+              lazydocker
+            ];
+
+            # Enable Docker for additional services
+            virtualisation.docker.enable = true;
+            users.users.amoon.extraGroups = ["docker"];
+          })
+        ];
+      };
+
       # Removed QEMU Chaotic configuration
       nixos-qemu-removed = nixpkgs.lib.nixosSystem {
         inherit system;
