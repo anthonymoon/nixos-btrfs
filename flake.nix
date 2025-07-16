@@ -402,7 +402,8 @@
 
         # Find disk ID or use direct path
         if [[ -d /dev/disk/by-id ]]; then
-          DISK_ID=$(ls -la /dev/disk/by-id/ | grep "$(basename "$DISK")" | head -1 | awk '{print $9}' || echo "")
+          # Find the disk ID that points to our disk (not partitions)
+          DISK_ID=$(ls -la /dev/disk/by-id/ | grep " -> .*$(basename "$DISK")$" | grep -v "part" | head -1 | awk '{print $9}' || echo "")
           if [[ -n "$DISK_ID" ]]; then
             DEVICE_PATH="/dev/disk/by-id/$DISK_ID"
           else
