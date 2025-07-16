@@ -293,7 +293,11 @@
         then firefox_nightly
         else firefox
       ) # Web browser
-      mpv-vapoursynth # Enhanced mpv
+      (
+        if (builtins.hasAttr "mpv-vapoursynth" pkgs)
+        then mpv-vapoursynth
+        else mpv
+      ) # Enhanced mpv
 
       # Gaming
       steam
@@ -324,7 +328,11 @@
       ) # Telegram
 
       # System monitoring
-      nix-top_abandoned # Nix build monitoring
+      (
+        if (builtins.hasAttr "nix-top_abandoned" pkgs)
+        then nix-top_abandoned
+        else null
+      ) # Nix build monitoring
 
       # Fonts
       nerd-fonts.fira-code
