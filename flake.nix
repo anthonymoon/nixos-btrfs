@@ -38,7 +38,7 @@
       ];
 
       # Core system configuration
-      networking.hostName = "nixos-dev";
+      networking.hostName = "nixos-dev1";
       networking.domain = "dirtybit.co";
 
       # User configuration
@@ -145,230 +145,38 @@
       # System version
       system.stateVersion = "24.05";
     };
-
     # Platform-specific configurations
-    qemuConfig = {
-      config,
-      lib,
-      pkgs,
-      ...
-    }: {
-      # QEMU/KVM optimizations
-      services.qemuGuest.enable = true;
-      services.spice-vdagentd.enable = true;
-      boot.kernelModules = ["virtio_balloon" "virtio_console" "virtio_rng"];
-
-      # Graphics with bleeding-edge Mesa
-      hardware.graphics.extraPackages = with pkgs; [
-        mesa.drivers
-      ];
-
-      # VM-specific packages
-      environment.systemPackages = with pkgs; [
-        # Add any VM specific packages here
-      ];
-    };
-
-    hypervConfig = {
-      config,
-      lib,
-      pkgs,
-      ...
-    }: {
-      # HyperV optimizations
-      virtualisation.hypervGuest.enable = true;
-      boot.kernelParams = ["video=hyperv_fb:1920x1080"];
-    };
-
-    baremetalConfig = {
-      config,
-      lib,
-      pkgs,
-      ...
-    }: {
-      # AMD GPU support with latest drivers
-      hardware.graphics.extraPackages = with pkgs; [
-        amdvlk
-      ];
-      boot.kernelModules = ["amdgpu"];
-
-      # Additional packages for bare metal
-      environment.systemPackages = with pkgs; [
-        # Add any bare metal specific packages here
-      ];
-    };
-
-    # Disko ZFS configuration
-    diskoConfig = {
-      config,
-      lib,
-      ...
-    }: let
-      diskDevice = lib.mkDefault "/dev/disk/by-id/PLACEHOLDER";
-    in {
-      disko.devices = {
-        disk = {
-          main = {
-            type = "disk";
-            device = diskDevice;
-            content = {
-              type = "gpt";
-              partitions = {
-                ESP = {
-                  size = "1G";
-                  type = "EF00";
-                  content = {
-                    type = "filesystem";
-                    format = "vfat";
-                    mountpoint = "/boot";
-                  };
-                };
-                zfs = {
-                  size = "100%";
-                  content = {
-                    type = "zfs";
-                    pool = "zroot";
-                  };
-                };
-              };
-            };
-          };
-        };
-        zpool = {
-          zroot = {
-            type = "zpool";
-            options = {
-              ashift = "12";
-              autotrim = "on";
-            };
-            rootFsOptions = {
-              acltype = "posixacl";
-              canmount = "off";
-              dnodesize = "auto";
-              normalization = "formD";
-              relatime = "on";
-              xattr = "sa";
-              mountpoint = "none";
-            };
-            datasets = {
-              # Root system container
-              "root" = {
-                type = "zfs_fs";
-                options = {
-                  canmount = "off";
-                  mountpoint = "none";
-                };
-              };
-              # Actual root filesystem - using legacy mount
-              "root/nixos" = {
-                type = "zfs_fs";
-                mountpoint = "/";
-                options = {
-                  compression = "lz4";
-                  canmount = "noauto";
-                  mountpoint = "legacy";
-                };
-              };
-              "home" = {
-                type = "zfs_fs";
-                mountpoint = "/home";
-                options = {
-                  compression = "zstd-3";
-                  recordsize = "1M";
-                };
-              };
-              "nix" = {
-                type = "zfs_fs";
-                mountpoint = "/nix";
-                options = {
-                  compression = "zstd-6";
-                  recordsize = "64k";
-                  atime = "off";
-                };
-              };
-              "persist" = {
-                type = "zfs_fs";
-                mountpoint = "/persist";
-                options = {
-                  compression = "lz4";
-                };
-              };
-              "reserved" = {
-                type = "zfs_fs";
-                options = {
-                  refreservation = "10G";
-                  canmount = "off";
-                };
-              };
-            };
-          };
-        };
-      };
-    };
+    # QEMU configuration moved to hardware-configuration.nix
+    # Removed HyperV and bare metal configs - QEMU only
+    # Removed old zroot disko config - using rpool config in disko-config-rpool.nix
   in {
     # NixOS configurations for different platforms
     nixosConfigurations = {
-      # Bare metal configuration with zroot pool
-      nixos-dev = nixpkgs.lib.nixosSystem {
-        inherit system;
-        modules = [
-          disko.nixosModules.disko
-          diskoConfig
-          baseConfig
-          baremetalConfig
-        ];
-      };
-
-      # Bare metal configuration with rpool structure
-      nixos-rpool = nixpkgs.lib.nixosSystem {
+      # QEMU VM configuration with rpool
+      nixos-dev1 = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
           disko.nixosModules.disko
           ./disko-config-rpool.nix
           baseConfig
-          baremetalConfig
-          ({config, ...}: {
-            # Override networking to use different hostName for rpool
-            networking.hostName = "with-rpool";
-          })
         ];
       };
 
-      # Bare metal configuration with Chaotic Nyx (use AFTER base installation)
-      nixos-dev-chaotic = nixpkgs.lib.nixosSystem {
+      # Legacy config removed
+      nixos-dev-chaotic-removed = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          chaotic.nixosModules.default
           baseConfig
-          baremetalConfig
           ({
             config,
             lib,
             pkgs,
             ...
           }: {
-            # Chaotic Nyx bleeding-edge configuration
+            # Chaotic Nyx bleeding-edge configuration for QEMU
             boot.kernelPackages = pkgs.linuxPackages_cachyos;
 
-            services.scx = {
-              enable = true;
-              scheduler = "scx_rustland";
-              package = pkgs.scx_git.full;
-            };
-
-            chaotic.hdr.enable = true;
             chaotic.mesa-git.enable = true;
-            chaotic.mesa-git.extraPackages = with pkgs; [
-              intel-media-driver
-              vaapiIntel
-            ];
-
-            services.ananicy = {
-              enable = true;
-              package = pkgs.ananicy-cpp;
-              rulesProvider = pkgs.ananicy-rules-cachyos_git;
-            };
-
             chaotic.nyx.cache.enable = true;
             chaotic.nyx.overlay.enable = true;
             chaotic.nyx.registry.enable = true;
@@ -380,24 +188,12 @@
         ];
       };
 
-      # QEMU/KVM configuration
-      nixos-qemu = nixpkgs.lib.nixosSystem {
-        inherit system;
-        modules = [
-          disko.nixosModules.disko
-          diskoConfig
-          baseConfig
-          qemuConfig
-        ];
-      };
-
-      # QEMU/KVM configuration with Chaotic Nyx (use AFTER base installation)
-      nixos-qemu-chaotic = nixpkgs.lib.nixosSystem {
+      # QEMU VM configuration with Chaotic Nyx (use AFTER base installation)
+      nixos-dev1-chaotic = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
           chaotic.nixosModules.default
           baseConfig
-          qemuConfig
           ({
             config,
             lib,
@@ -418,17 +214,6 @@
           })
         ];
       };
-
-      # HyperV configuration (without Chaotic for compatibility)
-      nixos-hyperv = nixpkgs.lib.nixosSystem {
-        inherit system;
-        modules = [
-          disko.nixosModules.disko
-          diskoConfig
-          baseConfig
-          hypervConfig
-        ];
-      };
     };
 
     # Build outputs
@@ -446,7 +231,6 @@
                 curl
                 wget
                 zfs
-                (writeScriptBin "nixos-install-zfs" (builtins.readFile ./install-nixos.sh))
               ];
               # Include this flake in the ISO
               nix.registry.nixos-config.flake = self;
@@ -463,28 +247,14 @@
           modules = [
             "${nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix"
             disko.nixosModules.disko
-            diskoConfig
+            ./disko-config-rpool.nix
             baseConfig
-            qemuConfig
             {
               virtualisation.diskSize = 20480; # 20GB
               virtualisation.memorySize = 4096; # 4GB RAM
             }
           ];
         }).config.system.build.vm;
-
-      # HyperV VHD image
-      hyperv-image =
-        (nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [
-            "${nixpkgs}/nixos/modules/virtualisation/hyperv-image.nix"
-            disko.nixosModules.disko
-            diskoConfig
-            baseConfig
-            hypervConfig
-          ];
-        }).config.system.build.hypervImage;
 
       # Installation script
       install-script = pkgs.writeScriptBin "nixos-install-zfs" ''
@@ -510,17 +280,8 @@
           done
         fi
 
-        if [[ "$PLATFORM" == "auto" ]]; then
-          if systemd-detect-virt --quiet; then
-            case $(systemd-detect-virt) in
-              kvm|qemu) PLATFORM="qemu" ;;
-              microsoft) PLATFORM="hyperv" ;;
-              *) PLATFORM="baremetal" ;;
-            esac
-          else
-            PLATFORM="baremetal"
-          fi
-        fi
+        # Always use QEMU platform
+        PLATFORM="qemu"
 
         echo "Deploying NixOS with ZFS to $DISK (platform: $PLATFORM)"
 
@@ -552,10 +313,10 @@
 
         # Install using disko
         sudo nix --extra-experimental-features "nix-command flakes" run github:nix-community/disko -- --mode disko \
-          --flake ".#nixos-$PLATFORM"
+          --flake ".#nixos-dev1"
 
         # Install NixOS
-        sudo nixos-install --flake ".#nixos-$PLATFORM"
+        sudo nixos-install --flake ".#nixos-dev1"
 
         # Cleanup
         cd /
@@ -584,7 +345,6 @@
         echo "Available commands:"
         echo "  nix build .#iso           - Build ISO image"
         echo "  nix build .#qemu-image    - Build QEMU image"
-        echo "  nix build .#hyperv-image  - Build HyperV image"
         echo "  nix run .#deploy          - Deploy to system"
         echo "  nix run .#install-script  - Run installer script"
       '';
