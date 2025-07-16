@@ -65,7 +65,7 @@
 
       # ZFS configuration
       boot.supportedFilesystems = ["zfs"];
-      boot.zfs.forceImportRoot = false;
+      boot.zfs.forceImportRoot = true; # Force import of root pool
       boot.zfs.requestEncryptionCredentials = false;
       # Set a proper unique hostId (required for ZFS)
       networking.hostId = "abcd1234";
@@ -84,6 +84,13 @@
 
       # Enable ZFS in initrd
       boot.initrd.supportedFilesystems = ["zfs"];
+
+      # Root filesystem configuration
+      fileSystems."/" = {
+        device = "zroot/root/nixos";
+        fsType = "zfs";
+        options = ["zfsutil"];
+      };
 
       # Network configuration
       networking.networkmanager.enable = false;
@@ -275,20 +282,22 @@
               mountpoint = "none";
             };
             datasets = {
-              # Root system container - canmount=noauto, mountpoint=legacy
+              # Root system container
               "root" = {
                 type = "zfs_fs";
                 options = {
-                  canmount = "noauto";
-                  mountpoint = "legacy";
+                  canmount = "off";
+                  mountpoint = "none";
                 };
               };
-              # Actual root filesystem under the container
+              # Actual root filesystem - using legacy mount
               "root/nixos" = {
                 type = "zfs_fs";
                 mountpoint = "/";
                 options = {
                   compression = "lz4";
+                  canmount = "noauto";
+                  mountpoint = "legacy";
                 };
               };
               "home" = {
