@@ -1,255 +1,185 @@
-# NixOS ZFS Installation Flake
+# NixOS Configuration
 
-A comprehensive NixOS flake that provides ZFS-based installations with deduplication, multi-platform support, gaming optimizations via Chaotic Nyx, and a complete desktop environment.
+A modular NixOS configuration following community standards with comprehensive system support.
 
-## 🚀 Quick Start
+## Features
 
-### One-Line Installation
-```bash
-# Boot from NixOS ISO, then:
-nix run github:yourusername/nixos-config#install-script
-```
-
-### Manual Deployment
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/nixos-config.git
-cd nixos-config
-
-# Deploy to system (auto-detects platform and disk)
-nix run .#deploy
-
-# Or specify disk and platform
-nix run .#deploy /dev/sda baremetal
-```
-
-## 📦 Build Outputs
-
-### ISO Image
-```bash
-# Build bootable ISO
-nix build .#iso
-sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress
-
-# The ISO includes the installer script pre-configured
-```
-
-### Virtual Machine Images
-```bash
-# QEMU/KVM image
-nix build .#qemu-image
-
-# HyperV image
-nix build .#hyperv-image
-
-# Run QEMU VM
-nix run .#run-qemu
-```
-
-## 🏗️ Architecture
-
-### ZFS Layout
-```
-zroot (pool)
-├── root      → /         (LZ4 compression)
-├── home      → /home     (ZSTD-3, 1M recordsize)
-├── nix       → /nix      (ZSTD-6 + deduplication, 64K recordsize)
-├── persist   → /persist  (LZ4 compression)
-├── var       → /var      (LZ4 compression)
-├── var/log   → /var/log  (GZIP compression, 128K recordsize)
-└── reserved              (10GB reserved space)
-```
-
-### Features
-- **ZFS deduplication** on `/nix` for 60-80% space savings
-- **Multi-platform support** (bare metal, QEMU, HyperV)
-- **Automatic disk detection** (sda/vda/nvme)
-- **16GB ZRAM swap** with zstd compression
-- **Hyprland desktop** with Waybar and modern tools
-- **Gaming optimized** with Chaotic Nyx (Mesa-git, GameMode, MangoHud)
-- **Performance enhanced** with SCX scheduler and optimizations
-- **Development environment** with VS Code and tools
-
-## 🎯 Platform Configurations
-
-### Bare Metal (`nixos-dev`)
-- Full hardware acceleration
-- AMDGPU support
-- Optimal ZFS performance
-
-### QEMU/KVM (`nixos-qemu`)
-- VirtIO drivers
-- SPICE integration
-- Guest agent support
-
-### HyperV (`nixos-hyperv`)
-- Enhanced session mode
-- Dynamic resolution
-- Integration services
-
-## 📝 Configuration
-
-### User Configuration
-- **User**: amoon (Anthony Moon)
-- **Email**: anthony@dirtybit.co
-- **Shell**: Fish with Starship prompt
+- **Filesystem**: Btrfs with optimized subvolumes and compression
+- **Kernel**: Linux Libre (latest)
 - **Desktop**: Hyprland with Waybar
+- **Services**: Complete media automation stack (Jellyfin, *arr services, Traefik)
+- **Gaming**: Steam, Proton, controller support, NVIDIA/AMD GPU drivers
+- **Development**: Multiple languages, cloud tools, editors
+- **Virtualization**: QEMU/KVM and Hyper-V optimization
+- **Multi-filesystem**: Support for NTFS, APFS, XFS, exFAT, ZFS, Btrfs
 
-### Network
-- **Manager**: systemd-networkd
-- **DHCP**: Enabled on all interfaces
-- **DNS**: AdGuard (94.140.14.14, 94.140.15.15)
+## Structure
 
-### ZFS Settings
-- **ARC Memory**: 2-8GB (auto-tuned based on RAM)
-- **Deduplication**: Enabled on `/nix` only
-- **Compression**: Tiered (LZ4/ZSTD-3/ZSTD-6)
-- **Auto-scrub**: Weekly
-- **Auto-snapshot**: Enabled
+```
+.
+├── config/          # User configuration files
+├── flake.nix        # Main flake configuration
+├── home.nix         # Home Manager configuration  
+├── hosts/           # Host-specific configurations
+│   └── nixos/       # Single host configuration
+├── lib/             # Helper functions
+├── modules/         # NixOS modules
+│   ├── core.nix
+│   ├── desktop.nix
+│   ├── development.nix
+│   ├── filesystems.nix
+│   ├── gaming.nix
+│   ├── media-server.nix
+│   ├── networking.nix
+│   ├── nix-config.nix
+│   └── virtualization.nix
+├── overlays/        # Package overlays
+└── packages/        # Modular package lists
+```
 
-## 🛠️ Development
+## Installation
 
-### Development Shell
+1. Boot from NixOS installer
+2. Partition disk:
+   ```bash
+   # The configuration expects /dev/sda, modify disk-config.nix if needed
+   ```
+3. Clone and install:
+   ```bash
+   git clone <repository-url> /mnt/etc/nixos
+   cd /mnt/etc/nixos
+   sudo nixos-install --flake .#nixos
+   ```
+
+## Disk Layout (Btrfs)
+
+```
+/dev/sda
+├── /boot     (1GB, ESP, FAT32)
+├── swap      (16GB)
+└── /         (Btrfs with subvolumes)
+    ├── @         → /         (zstd:3)
+    ├── @home     → /home     (zstd:3)
+    ├── @nix      → /nix      (zstd:6)
+    ├── @var      → /var      (zstd:3)
+    ├── @tmp      → /tmp      (zstd:1)
+    └── @snapshots → /.snapshots (zstd:3)
+```
+
+## Usage
+
+Rebuild system:
+```bash
+sudo nixos-rebuild switch --flake .#nixos
+```
+
+Update flake:
+```bash
+nix flake update
+```
+
+Development shell:
 ```bash
 nix develop
 ```
 
-Provides:
-- NixOS rebuild tools
-- QEMU for testing
-- ZFS utilities
-- Development tools
+## Configuration Details
 
-### Available Commands
+- **Hostname**: deadbeef
+- **Domain**: dirtybit.co
+- **User**: amoon
+- **Timezone**: UTC
+- **Shell**: Fish with Starship
+- **Desktop**: Hyprland
+
+## Services
+
+### Media Server
+- Jellyfin (port 8096)
+- Radarr, Sonarr, Prowlarr, Bazarr, Lidarr, Readarr
+- Jellyseerr (port 5055)
+- Transmission
+- AdGuard Home (port 3000)
+- Samba & NFS
+- Traefik reverse proxy
+
+### Development
+- Docker with Btrfs storage driver
+- Multiple language support (Python 3.12, Node.js 22, Go, Rust)
+- Cloud tools (Terraform, gcloud, AWS CLI, Azure CLI)
+- VS Code, Neovim
+
+### Gaming
+- Steam with Proton GE
+- GameMode
+- MangoHud & GOverlay
+- Controller support (Xbox, PlayStation)
+- NVIDIA proprietary drivers
+- AMD GPU support
+
+## Network
+
+- systemd-networkd (no NetworkManager)
+- AdGuard DNS (94.140.14.14, 94.140.15.15)
+- Firewall enabled with service-specific ports
+
+## Performance
+
+- ZRAM swap (100% memory, zstd)
+- Btrfs with compression and async discard
+- Weekly garbage collection
+- Nix store optimization
+- Cachix binary caches
+
+## Monitoring
+
 ```bash
-# Build outputs
-nix build .#iso
-nix build .#qemu-image
-nix build .#hyperv-image
+# Btrfs status
+sudo btrfs filesystem show
+sudo btrfs filesystem df /
 
-# Deploy/install
-nix run .#deploy
-nix run .#install-script
+# System resources
+btop
 
-# Run VM
-nix run .#run-qemu
+# Gaming performance
+mangohud <game>
+
+# Docker
+docker ps
+docker stats
 ```
 
-## 🔧 Customization
+## Troubleshooting
 
-### Modify User Settings
-Edit `home.nix` to customize:
-- Shell aliases and configuration
-- Hyprland keybindings
-- Application preferences
-- Development tools
-
-### Modify System Settings
-Edit `flake.nix` to customize:
-- System packages
-- Hardware configuration
-- ZFS settings
-- Platform-specific optimizations
-
-### Modify Disk Layout
-Edit `disko-config.nix` to customize:
-- Partition sizes
-- ZFS dataset structure
-- Compression algorithms
-- Mount options
-
-## 📊 Performance
-
-### Expected Results
-- **Boot time**: ~10 seconds
-- **Desktop launch**: ~2 seconds
-- **Storage efficiency**: 60-80% space savings on `/nix`
-- **Memory usage**: ~1.5GB idle with Hyprland
-- **Game performance**: Near native with Proton
-
-### ZFS Monitoring
+### Rebuild fails
 ```bash
-# Pool status
-zpool status -D
+# Check flake
+nix flake check
 
-# Deduplication ratio
-zpool list -o name,dedup,health
-
-# Dataset usage
-zfs list -o name,used,compressratio,dedup
-
-# ARC statistics
-arc_summary
+# Verbose rebuild
+sudo nixos-rebuild switch --flake .#nixos --show-trace
 ```
 
-## 🆘 Troubleshooting
-
-### Common Issues
-
-**Installation fails with ZFS error**
+### Disk space
 ```bash
-# Check if ZFS modules are loaded
-lsmod | grep zfs
+# Check Btrfs usage
+sudo compsize /
+sudo btrfs filesystem usage /
 
-# Force import pool
-zpool import -f zroot
+# Clean old generations
+sudo nix-collect-garbage -d
 ```
 
-**Low dedup ratio**
-- Dedup needs time to analyze data
-- Check after installing packages: `zpool get dedupratio zroot`
-
-**Boot issues**
-- Verify host ID: `head -c 8 /etc/machine-id`
-- Check ZFS import: `zpool import`
-
-### Recovery
+### Services
 ```bash
-# Boot from NixOS ISO
-# Import pool
-zpool import -f zroot
+# Check service status
+systemctl status jellyfin
+systemctl status docker
 
-# Mount filesystems
-mount -t zfs zroot/root /mnt
-mount -t zfs zroot/home /mnt/home
-mount -t zfs zroot/nix /mnt/nix
-mount /dev/disk/by-label/BOOT /mnt/boot
-
-# Rebuild system
-nixos-rebuild switch --flake /mnt/etc/nixos#nixos-dev
+# View logs
+journalctl -u jellyfin -f
 ```
 
-## 📋 System Requirements
+## License
 
-- **RAM**: Minimum 4GB (8GB+ recommended for optimal ZFS performance)
-- **Disk**: Minimum 20GB (64GB+ recommended)
-- **UEFI**: Required for boot
-- **Internet**: Required for initial installation
-
-## 🔐 Security
-
-- Default passwords disabled
-- User setup required on first boot
-- Secure boot compatible
-- ZFS encryption ready (disabled by default)
-
-## 🎮 Gaming
-
-Enhanced gaming stack with Chaotic Nyx:
-- **Steam** with Proton support
-- **Lutris** for non-Steam games  
-- **Wine** with dependencies
-- **Discord** for communication
-- **GameMode** for automatic game optimizations
-- **MangoHud** for performance monitoring
-- **Mesa-git** for latest graphics drivers
-- **SCX scheduler** for better CPU scheduling
-- Hardware acceleration with latest drivers
-
-## 📄 License
-
-This configuration is provided as-is for educational and personal use. Modify as needed for your requirements.
-
----
-
-**Note**: Replace `yourusername/nixos-config` with your actual GitHub repository URL in all commands and configuration files.
+This configuration is provided as-is for personal use.
