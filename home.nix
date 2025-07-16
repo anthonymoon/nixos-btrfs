@@ -327,17 +327,16 @@
         else telegram-desktop
       ) # Telegram
 
-      # System monitoring
-      (
-        if (builtins.hasAttr "nix-top_abandoned" pkgs)
-        then nix-top_abandoned
-        else null
-      ) # Nix build monitoring
-
       # Fonts
       nerd-fonts.fira-code
     ]
     ++ (builtins.filter (pkg: pkg != null) [
+      # System monitoring (optional)
+      (
+        if (builtins.hasAttr "nix-top_abandoned" pkgs)
+        then nix-top_abandoned
+        else null
+      )
       # Chaotic packages (only available with chaotic overlay)
       (
         if (builtins.hasAttr "mangohud_git" pkgs)
