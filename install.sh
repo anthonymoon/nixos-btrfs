@@ -50,7 +50,7 @@ nix run github:nix-community/disko -- --mode disko --flake "$FLAKE_URL"
 # Install NixOS
 echo ""
 echo "==> Installing NixOS..."
-nixos-install --flake "$FLAKE_URL" --no-root-password
+nixos-install --flake "$FLAKE_URL" --no-root-password --no-write-lock-file
 
 echo ""
 echo "Installation complete!"

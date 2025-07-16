@@ -13,11 +13,6 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    deploy-rs = {
-      url = "github:serokell/deploy-rs";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs = {
@@ -25,7 +20,6 @@
     nixpkgs,
     home-manager,
     disko,
-    deploy-rs,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -77,25 +71,6 @@
       };
     };
 
-    deploy = {
-      nodes = {
-        deadbeef = {
-          hostname = "deadbeef.dirtybit.co";
-          profiles = {
-            system = {
-              sshUser = "amoon";
-              user = "root";
-              path = deploy-rs.lib.${system}.activate.nixos self.nixosConfigurations.nixos;
-            };
-          };
-        };
-      };
-
-      # Optional: auto rollback on failure
-      autoRollback = true;
-      magicRollback = true;
-    };
-
     # Development shell
     devShells.${system}.default = pkgs.mkShell {
       packages = with pkgs; [
@@ -107,7 +82,6 @@
         deadnix
         alejandra
         git
-        deploy-rs
       ];
 
       shellHook = ''
@@ -115,9 +89,6 @@
         echo ""
         echo "System rebuild:"
         echo "  sudo nixos-rebuild switch --flake .#nixos"
-        echo ""
-        echo "Remote deployment:"
-        echo "  deploy .#deadbeef"
         echo ""
         echo "Fresh installation:"
         echo "  sudo nix run .#install"
@@ -131,9 +102,6 @@
 
     # Formatter
     formatter.${system} = pkgs.alejandra;
-
-    # Checks for deploy-rs
-    checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
 
     # Apps for direct execution
     apps.${system} = {
@@ -186,7 +154,7 @@
           # Install NixOS
           echo ""
           echo "==> Installing NixOS..."
-          nixos-install --flake "$FLAKE_URL" --no-root-password
+          nixos-install --flake "$FLAKE_URL" --no-root-password --no-write-lock-file
 
           echo ""
           echo "Installation complete!"

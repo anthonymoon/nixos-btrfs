@@ -79,18 +79,36 @@ sudo nixos-install --flake github:anthonymoon/nixos-zfsroot#nixos
 
 ## Usage
 
-Rebuild system:
+### Local System
 ```bash
+# Rebuild current system
 sudo nixos-rebuild switch --flake .#nixos
+
+# Test changes without switching
+sudo nixos-rebuild test --flake .#nixos
 ```
 
-Update flake:
+### Remote System
 ```bash
+# Deploy to remote host
+sudo nixos-rebuild switch --flake .#nixos --target-host amoon@deadbeef.dirtybit.co
+
+# Build locally, deploy remotely
+sudo nixos-rebuild switch --flake .#nixos --target-host amoon@deadbeef.dirtybit.co --build-host localhost
+```
+
+### Maintenance
+```bash
+# Update flake inputs
 nix flake update
-```
 
-Development shell:
-```bash
+# Check flake
+nix flake check
+
+# Format code
+nix fmt
+
+# Development shell
 nix develop
 ```
 
