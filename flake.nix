@@ -643,6 +643,25 @@
           exec ${./scripts/test-binary-cache.sh} "''${@}"
         ''}/bin/test-cache";
       };
+
+      # Minimal installer for space-constrained environments
+      minimal-install = {
+        type = "app";
+        program = let
+          minimalInstall = pkgs.writeShellScriptBin "minimal-install" ''
+            #!/usr/bin/env bash
+            export PATH="${pkgs.lib.makeBinPath [
+              pkgs.coreutils
+              pkgs.util-linux
+              pkgs.parted
+              pkgs.dosfstools
+              pkgs.btrfs-progs
+              pkgs.nixos-install-tools
+            ]}:$PATH"
+            exec ${./scripts/minimal-install.sh} "$@"
+          '';
+        in "${minimalInstall}/bin/minimal-install";
+      };
     };
   };
 }
