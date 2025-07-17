@@ -39,9 +39,7 @@
     win-spice
   ];
 
-  boot.kernel.sysctl = {
-    "vm.swappiness" = lib.mkDefault 10;
-  };
+  # vm.swappiness is set in disko configurations based on filesystem type
 
   zramSwap = {
     enable = lib.mkDefault true;

@@ -45,6 +45,9 @@
   # Enable QEMU guest agent
   services.qemuGuest.enable = true;
 
+  # Workaround for btrfsck symlink conflict in NixOS 24.11
+  boot.initrd.systemd.enable = true;  # Use systemd-based initrd
+  
   # Disable GUI
   services.xserver.enable = false;
 
