@@ -576,13 +576,16 @@
             fi
 
             # Run disko to partition and mount
-            if $DISKO_CMD github:nix-community/disko/latest -- \
+            print_info "Running: nix run github:nix-community/disko -- --mode destroy,format,mount --flake github:anthonymoon/nixos-btrfs#$HOST --disk main $DISK"
+
+            if $DISKO_CMD github:nix-community/disko -- \
               --mode destroy,format,mount \
               --flake "github:anthonymoon/nixos-btrfs#$HOST" \
               --disk main "$DISK"; then
               print_success "Disk partitioned and mounted successfully"
             else
               print_error "Disk partitioning failed"
+              print_info "You may need to run the installer with --refresh flag"
               exit 1
             fi
 
