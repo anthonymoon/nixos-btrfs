@@ -318,7 +318,7 @@ in {
       "vm.dirty_writeback_centisecs" = 100;
 
       # Crypto performance
-      "vm.swappiness" = 1; # Reduce swap usage to avoid encryption overhead
+      "vm.swappiness" = lib.mkDefault 1; # Reduce swap usage to avoid encryption overhead
     };
   };
 }

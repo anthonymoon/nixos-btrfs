@@ -34,12 +34,10 @@
   # Allow passwordless sudo for wheel group
   security.sudo.wheelNeedsPassword = false;
 
-  # Minimal packages for headless VM
+  # ABSOLUTELY MINIMAL packages - just enough to boot and rebuild
   environment.systemPackages = with pkgs; [
     vim
     git
-    htop
-    tmux
   ];
 
   # Enable QEMU guest agent
@@ -51,12 +49,14 @@
   # Network configuration
   networking.useDHCP = lib.mkDefault true;
 
-  # ZFS requires a hostId
-  networking.hostId = "8425e349";
-
   # Firewall
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [22];
+
+  # IMPORTANT: Disable all the heavy modules that pull in large packages
+  imports = lib.mkForce [
+    # Only include the minimal required modules
+  ];
 
   system.stateVersion = "24.11";
 }

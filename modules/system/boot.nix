@@ -303,13 +303,10 @@ in {
         theme = "breeze";
       };
 
-      # Filesystem support
+      # Filesystem support - only add filesystems that are actually being used
       supportedFilesystems =
         [cfg.filesystem]
-        ++ ["vfat" "ntfs" "exfat"]
-        ++ lib.optionals (cfg.filesystem != "btrfs") ["btrfs"]
-        ++ lib.optionals (cfg.filesystem != "zfs") ["zfs"]
-        ++ lib.optionals (cfg.filesystem != "ext4") ["ext4"];
+        ++ ["vfat" "ntfs" "exfat"];
     };
 
     # Hardware acceleration and drivers

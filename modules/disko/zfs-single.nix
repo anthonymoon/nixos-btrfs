@@ -257,7 +257,7 @@ in {
       "vm.dirty_writeback_centisecs" = 100;
 
       # ZFS-specific tuning
-      "vm.swappiness" = 1; # ZFS handles memory better, reduce swap usage
+      "vm.swappiness" = lib.mkDefault 1; # ZFS handles memory better, reduce swap usage
     };
 
     # Environment variables for ZFS

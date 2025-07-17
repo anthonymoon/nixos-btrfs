@@ -503,6 +503,121 @@
         in "${diskoInstall}/bin/disko-install";
       };
 
+      # Smart installer that handles space issues
+      smart-install = {
+        type = "app";
+        program = let
+          smartInstall = pkgs.writeShellScriptBin "smart-install" ''
+            #!/usr/bin/env bash
+            set -euo pipefail
+
+            # Smart NixOS installer that handles space issues automatically
+
+            # Colors
+            RED='\033[0;31m'
+            GREEN='\033[0;32m'
+            YELLOW='\033[0;33m'
+            BLUE='\033[0;34m'
+            NC='\033[0m'
+
+            print_error() { echo -e "''${RED}[ERROR]''${NC} $1" >&2; }
+            print_success() { echo -e "''${GREEN}[SUCCESS]''${NC} $1"; }
+            print_warning() { echo -e "''${YELLOW}[WARNING]''${NC} $1"; }
+            print_info() { echo -e "''${BLUE}[INFO]''${NC} $1"; }
+
+            # Parse arguments
+            HOST="''${1:-vm}"
+            DISK="''${2:-}"
+
+            echo "╔══════════════════════════════════════════════════════════════╗"
+            echo "║                   Smart NixOS Installer                      ║"
+            echo "║                  (Handles space automatically)               ║"
+            echo "╚══════════════════════════════════════════════════════════════╝"
+            echo ""
+
+            # Validate inputs
+            if [[ -z "$DISK" ]]; then
+              print_error "Disk parameter is required"
+              echo "Usage: $0 <host> <disk>"
+              echo "Example: $0 vm /dev/sda"
+              exit 1
+            fi
+
+            if [[ ! -b "$DISK" ]]; then
+              print_error "Disk $DISK does not exist"
+              exit 1
+            fi
+
+            print_info "Target host: $HOST"
+            print_info "Target disk: $DISK"
+            echo ""
+
+            # Warning
+            print_warning "This will COMPLETELY ERASE $DISK"
+            read -p "Continue? (yes/NO): " confirm
+            [[ "$confirm" != "yes" ]] && exit 0
+
+            # Method: Partition first, then install to mounted filesystem
+            # This avoids the space issue entirely
+
+            print_info "Phase 1: Partitioning disk with disko..."
+
+            # Get the disk configuration
+            DISKO_CMD="nix run --extra-experimental-features 'nix-command flakes' --no-write-lock-file"
+
+            # For ZFS configs, we need special handling
+            if [[ "$HOST" == *"zfs"* ]]; then
+              export NIXPKGS_ALLOW_BROKEN=1
+              DISKO_CMD="$DISKO_CMD --impure"
+            fi
+
+            # Run disko to partition and mount
+            if $DISKO_CMD github:nix-community/disko/latest -- \
+              --mode destroy,format,mount \
+              --flake "github:anthonymoon/nixos-btrfs#$HOST" \
+              --arg device "\"$DISK\""; then
+              print_success "Disk partitioned and mounted successfully"
+            else
+              print_error "Disk partitioning failed"
+              exit 1
+            fi
+
+            print_info "Phase 2: Installing NixOS to /mnt..."
+
+            # Generate hardware configuration
+            nixos-generate-config --root /mnt --force || true
+
+            # Install with minimal substituters to avoid space issues
+            NIX_INSTALL_CMD="nixos-install --root /mnt --no-root-password"
+            NIX_INSTALL_CMD="$NIX_INSTALL_CMD --flake github:anthonymoon/nixos-btrfs#$HOST"
+            NIX_INSTALL_CMD="$NIX_INSTALL_CMD --max-jobs 4"
+            NIX_INSTALL_CMD="$NIX_INSTALL_CMD --option substitute true"
+            NIX_INSTALL_CMD="$NIX_INSTALL_CMD --option builders-use-substitutes true"
+            NIX_INSTALL_CMD="$NIX_INSTALL_CMD --option require-sigs false"
+
+            # Show what we're doing
+            print_info "Running nixos-install..."
+            echo ""
+
+            # Execute installation
+            if eval "$NIX_INSTALL_CMD"; then
+              print_success "Installation completed successfully!"
+              echo ""
+              print_info "Next steps:"
+              echo "  1. Reboot into your new system: sudo reboot"
+              echo "  2. Login as 'amoon' with password 'nixos'"
+              echo "  3. Change your password: passwd"
+              echo ""
+              print_success "Welcome to NixOS!"
+            else
+              print_error "Installation failed"
+              print_info "Check the logs above for details"
+              exit 1
+            fi
+          '';
+        in "${smartInstall}/bin/smart-install";
+      };
+
       # Run VM for testing
       run-vm = {
         type = "app";

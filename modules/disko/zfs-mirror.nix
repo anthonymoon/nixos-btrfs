@@ -471,7 +471,7 @@ in {
       "vm.dirty_writeback_centisecs" = 50;
 
       # ZFS-specific tuning for mirrors
-      "vm.swappiness" = 1;
+      "vm.swappiness" = lib.mkDefault 1;
     };
   };
 }
