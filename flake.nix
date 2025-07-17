@@ -120,6 +120,19 @@
         ];
       };
 
+      # Minimal VM configuration with ZFS
+      vm = mkSystem {
+        hostname = "vm";
+        diskConfig = "zfs-single";
+        extraModules = [
+          {
+            # VM-specific optimizations
+            services.qemuGuest.enable = true;
+            boot.kernelParams = ["console=ttyS0"];
+          }
+        ];
+      };
+
       # Example additional hosts (uncomment and customize as needed)
 
       # # Laptop configuration with single BTRFS
@@ -353,12 +366,12 @@
 
           if [[ -n "$DISK" ]]; then
             echo "Disk: $DISK"
-            exec sudo nix run github:nix-community/disko#disko-install -- \
-              --flake ".#$HOST" --disk main "$DISK" --write-efi-boot-entries
+            exec sudo nix --extra-experimental-features 'nix-command flakes' run github:nix-community/disko#disko-install -- \
+              --flake "github:anthonymoon/nixos-btrfs#$HOST" --disk main "$DISK" --write-efi-boot-entries
           else
             echo "Using auto-detected disk"
-            exec sudo nix run github:nix-community/disko#disko-install -- \
-              --flake ".#$HOST" --write-efi-boot-entries
+            exec sudo nix --extra-experimental-features 'nix-command flakes' run github:nix-community/disko#disko-install -- \
+              --flake "github:anthonymoon/nixos-btrfs#$HOST" --write-efi-boot-entries
           fi
         ''}/bin/disko-install";
       };
