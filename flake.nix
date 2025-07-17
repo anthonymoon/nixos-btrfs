@@ -368,27 +368,139 @@
       # Direct disko install
       disko-install = {
         type = "app";
-        program = "${pkgs.writeShellScriptBin "disko-install" ''
-          #!/usr/bin/env bash
-          set -euo pipefail
+        program = let
+          diskoInstall = pkgs.writeShellScriptBin "disko-install" ''
+            #!/usr/bin/env bash
+            set -euo pipefail
 
-          HOST="''${1:-nixos}"
-          DISK="''${2:-}"
+            # Colors for output
+            RED='\033[0;31m'
+            GREEN='\033[0;32m'
+            YELLOW='\033[0;33m'
+            NC='\033[0m' # No Color
 
-          echo "NixOS Disko Installer"
-          echo "===================="
-          echo "Host: $HOST"
+            # Function to print colored output
+            print_error() { echo -e "''${RED}[ERROR]''${NC} $1" >&2; }
+            print_success() { echo -e "''${GREEN}[SUCCESS]''${NC} $1"; }
+            print_warning() { echo -e "''${YELLOW}[WARNING]''${NC} $1"; }
+            print_info() { echo -e "[INFO] $1"; }
 
-          if [[ -n "$DISK" ]]; then
-            echo "Disk: $DISK"
-            exec sudo nix --extra-experimental-features 'nix-command flakes' run github:nix-community/disko#disko-install -- \
-              --flake "github:anthonymoon/nixos-btrfs#$HOST" --disk main "$DISK" --write-efi-boot-entries
-          else
-            echo "Using auto-detected disk"
-            exec sudo nix --extra-experimental-features 'nix-command flakes' run github:nix-community/disko#disko-install -- \
-              --flake "github:anthonymoon/nixos-btrfs#$HOST" --write-efi-boot-entries
-          fi
-        ''}/bin/disko-install";
+            # Input validation
+            usage() {
+              echo "Usage: $0 <host> [disk]"
+              echo ""
+              echo "Available hosts:"
+              echo "  nixos       - Main system with BTRFS+LUKS"
+              echo "  vm          - Virtual machine with BTRFS"
+              echo "  vm-zfs      - Virtual machine with ZFS"
+              echo ""
+              echo "Examples:"
+              echo "  $0 vm /dev/sda"
+              echo "  $0 vm-zfs /dev/vda"
+              echo ""
+              exit 1
+            }
+
+            # Parse arguments
+            if [[ $# -lt 1 ]]; then
+              print_error "Missing required argument: host"
+              usage
+            fi
+
+            HOST="$1"
+            DISK="''${2:-}"
+
+            # Validate host exists
+            VALID_HOSTS=("nixos" "vm" "vm-zfs")
+            if [[ ! " ''${VALID_HOSTS[@]} " =~ " ''${HOST} " ]]; then
+              print_error "Invalid host: $HOST"
+              print_info "Valid hosts are: ''${VALID_HOSTS[*]}"
+              exit 1
+            fi
+
+            # Validate disk if provided
+            if [[ -n "$DISK" ]]; then
+              if [[ ! -b "$DISK" ]]; then
+                print_error "Disk device $DISK does not exist or is not a block device"
+                exit 1
+              fi
+
+              # Check if disk is mounted
+              if mount | grep -q "^$DISK"; then
+                print_error "Disk $DISK appears to be mounted. Please unmount it first."
+                exit 1
+              fi
+            fi
+
+            # Check for required tools
+            for cmd in nix sudo; do
+              if ! command -v "$cmd" &> /dev/null; then
+                print_error "Required command '$cmd' not found in PATH"
+                exit 1
+              fi
+            done
+
+            # Determine if we need NIXPKGS_ALLOW_BROKEN for ZFS
+            EXTRA_FLAGS=""
+            if [[ "$HOST" == "vm-zfs" ]]; then
+              print_warning "ZFS configuration may require allowing broken packages"
+              EXTRA_FLAGS="--impure"
+              export NIXPKGS_ALLOW_BROKEN=1
+            fi
+
+            echo "╔════════════════════════════════════════════════════════════╗"
+            echo "║                   NixOS Disko Installer                    ║"
+            echo "╚════════════════════════════════════════════════════════════╝"
+            echo ""
+            echo "Host: $HOST"
+            if [[ -n "$DISK" ]]; then
+              echo "Disk: $DISK"
+            else
+              echo "Disk: Auto-detect"
+            fi
+            echo ""
+
+            # Confirmation prompt
+            print_warning "This will COMPLETELY ERASE the selected disk!"
+            read -p "Are you sure you want to continue? (yes/NO): " confirm
+            if [[ "$confirm" != "yes" ]]; then
+              print_info "Installation cancelled"
+              exit 0
+            fi
+
+            echo ""
+            print_info "Starting installation..."
+            echo ""
+
+            # Build the full command
+            NIX_CMD="nix run"
+            NIX_CMD="$NIX_CMD --extra-experimental-features 'nix-command flakes'"
+            NIX_CMD="$NIX_CMD --no-write-lock-file"  # Properly handle lock file
+            NIX_CMD="$NIX_CMD $EXTRA_FLAGS"
+            NIX_CMD="$NIX_CMD github:nix-community/disko/latest#disko-install"
+            NIX_CMD="$NIX_CMD --"
+            NIX_CMD="$NIX_CMD --flake 'github:anthonymoon/nixos-btrfs#$HOST'"
+            NIX_CMD="$NIX_CMD --write-efi-boot-entries"
+
+            if [[ -n "$DISK" ]]; then
+              NIX_CMD="$NIX_CMD --disk main '$DISK'"
+            fi
+
+            # Execute with proper error handling
+            if sudo bash -c "$NIX_CMD"; then
+              print_success "Installation completed successfully!"
+              echo ""
+              print_info "Next steps:"
+              echo "  1. Reboot into your new system"
+              echo "  2. Login with user 'amoon' and password 'nixos'"
+              echo "  3. Change your password with: passwd"
+              echo "  4. Update your configuration in /etc/nixos/"
+            else
+              print_error "Installation failed!"
+              exit 1
+            fi
+          '';
+        in "${diskoInstall}/bin/disko-install";
       };
 
       # Run VM for testing
