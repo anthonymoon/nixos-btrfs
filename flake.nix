@@ -294,19 +294,47 @@
       # Interactive installer
       install = {
         type = "app";
-        program = "${pkgs.writeShellScriptBin "install-interactive" ''
-          #!/usr/bin/env bash
-          exec ${./scripts/install-interactive.sh}
-        ''}/bin/install-interactive";
+        program = let
+          installScript = pkgs.writeShellScriptBin "install-interactive" ''
+            #!/usr/bin/env bash
+            export PATH="${pkgs.lib.makeBinPath [
+              pkgs.jq
+              pkgs.git
+              pkgs.coreutils
+              pkgs.util-linux
+              pkgs.btrfs-progs
+              pkgs.zfs
+              pkgs.cryptsetup
+              pkgs.parted
+              pkgs.gawk
+              pkgs.gnugrep
+              pkgs.gnused
+              pkgs.findutils
+            ]}:$PATH"
+            exec ${./scripts/install-interactive.sh}
+          '';
+        in "${installScript}/bin/install-interactive";
       };
 
       # System mount tool
       mount = {
         type = "app";
-        program = "${pkgs.writeShellScriptBin "mount-system" ''
-          #!/usr/bin/env bash
-          exec ${./scripts/mount-system.sh}
-        ''}/bin/mount-system";
+        program = let
+          mountScript = pkgs.writeShellScriptBin "mount-system" ''
+            #!/usr/bin/env bash
+            export PATH="${pkgs.lib.makeBinPath [
+              pkgs.coreutils
+              pkgs.util-linux
+              pkgs.btrfs-progs
+              pkgs.zfs
+              pkgs.cryptsetup
+              pkgs.gnugrep
+              pkgs.gnused
+              pkgs.findutils
+            ]}:$PATH"
+            exec ${./scripts/mount-system.sh}
+          '';
+        in "${mountScript}/bin/mount-system";
       };
 
       # Direct disko install
