@@ -45,18 +45,28 @@ A modular NixOS configuration following community standards with comprehensive s
 
 ```bash
 # Smart installer - handles space issues automatically (RECOMMENDED)
+# For BTRFS VM:
 nix run \
-  --extra-experimental-features "nix-command flakes" \
+  --extra-experimental-features nix-command \
+  --extra-experimental-features flakes \
   github:anthonymoon/nixos-btrfs#smart-install -- vm /dev/sda
 
-# Standard disko installer
+# For ZFS VM (auto-detects and handles NIXPKGS_ALLOW_BROKEN):
 nix run \
-  --extra-experimental-features "nix-command flakes" \
+  --extra-experimental-features nix-command \
+  --extra-experimental-features flakes \
+  github:anthonymoon/nixos-btrfs#smart-install -- vm-zfs /dev/sda
+
+# Standard disko installer (if smart-install fails)
+nix run \
+  --extra-experimental-features nix-command \
+  --extra-experimental-features flakes \
   github:anthonymoon/nixos-btrfs#disko-install -- vm /dev/sda
 
-# For ZFS configurations
+# For ZFS with disko-install
 NIXPKGS_ALLOW_BROKEN=1 nix run \
-  --extra-experimental-features "nix-command flakes" \
+  --extra-experimental-features nix-command \
+  --extra-experimental-features flakes \
   --impure \
   github:anthonymoon/nixos-btrfs#disko-install -- vm-zfs /dev/sda
 ```
