@@ -41,25 +41,41 @@ A modular NixOS configuration following community standards with comprehensive s
 
 ### Quick Install (from NixOS LiveCD)
 
+**Note**: Run as root user (no sudo needed in LiveCD)
+
 ```bash
-# Install with flake (requires experimental features)
-sudo nix --extra-experimental-features "nix-command flakes" run github:anthonymoon/nixos-btrfs#install
+# Smart installer - handles space issues automatically (RECOMMENDED)
+nix run \
+  --extra-experimental-features "nix-command flakes" \
+  github:anthonymoon/nixos-btrfs#smart-install -- vm /dev/sda
 
-# Or use curl installer
-curl -sL https://raw.githubusercontent.com/anthonymoon/nixos-btrfs/main/install.sh | sudo bash
+# Standard disko installer
+nix run \
+  --extra-experimental-features "nix-command flakes" \
+  github:anthonymoon/nixos-btrfs#disko-install -- vm /dev/sda
 
-# Specify different disk (default is /dev/sda)
-sudo nix --extra-experimental-features "nix-command flakes" run github:anthonymoon/nixos-btrfs#install -- /dev/nvme0n1
+# For ZFS configurations
+NIXPKGS_ALLOW_BROKEN=1 nix run \
+  --extra-experimental-features "nix-command flakes" \
+  --impure \
+  github:anthonymoon/nixos-btrfs#disko-install -- vm-zfs /dev/sda
 ```
+
+Available hosts:
+- `vm` - Minimal VM with BTRFS (recommended for testing)
+- `vm-zfs` - Minimal VM with ZFS (may require newer kernel)
+- `nixos` - Full desktop system with BTRFS+LUKS encryption
 
 ### Manual Install
 
 ```bash
 # Partition and format
-sudo nix run github:nix-community/disko -- --mode disko --flake github:anthonymoon/nixos-btrfs#nixos
+nix run github:nix-community/disko -- \
+  --mode disko \
+  --flake github:anthonymoon/nixos-btrfs#nixos
 
 # Install
-sudo nixos-install --flake github:anthonymoon/nixos-btrfs#nixos
+nixos-install --flake github:anthonymoon/nixos-btrfs#nixos
 ```
 
 ## Disk Layout (Btrfs)

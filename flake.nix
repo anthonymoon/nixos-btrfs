@@ -474,7 +474,8 @@
 
             # Build the full command
             NIX_CMD="nix run"
-            NIX_CMD="$NIX_CMD --extra-experimental-features 'nix-command flakes'"
+            NIX_CMD="$NIX_CMD --extra-experimental-features nix-command"
+            NIX_CMD="$NIX_CMD --extra-experimental-features flakes"
             NIX_CMD="$NIX_CMD --no-write-lock-file"  # Properly handle lock file
             NIX_CMD="$NIX_CMD $EXTRA_FLAGS"
             NIX_CMD="$NIX_CMD github:nix-community/disko/latest#disko-install"
@@ -487,7 +488,7 @@
             fi
 
             # Execute with proper error handling
-            if sudo bash -c "$NIX_CMD"; then
+            if bash -c "$NIX_CMD"; then
               print_success "Installation completed successfully!"
               echo ""
               print_info "Next steps:"
@@ -563,7 +564,10 @@
             print_info "Phase 1: Partitioning disk with disko..."
 
             # Get the disk configuration
-            DISKO_CMD="nix run --extra-experimental-features 'nix-command flakes' --no-write-lock-file"
+            DISKO_CMD="nix run \
+              --extra-experimental-features nix-command \
+              --extra-experimental-features flakes \
+              --no-write-lock-file"
 
             # For ZFS configs, we need special handling
             if [[ "$HOST" == *"zfs"* ]]; then
@@ -575,7 +579,7 @@
             if $DISKO_CMD github:nix-community/disko/latest -- \
               --mode destroy,format,mount \
               --flake "github:anthonymoon/nixos-btrfs#$HOST" \
-              --arg device "\"$DISK\""; then
+              --disk main "$DISK"; then
               print_success "Disk partitioned and mounted successfully"
             else
               print_error "Disk partitioning failed"
@@ -588,12 +592,14 @@
             nixos-generate-config --root /mnt --force || true
 
             # Install with minimal substituters to avoid space issues
-            NIX_INSTALL_CMD="nixos-install --root /mnt --no-root-password"
-            NIX_INSTALL_CMD="$NIX_INSTALL_CMD --flake github:anthonymoon/nixos-btrfs#$HOST"
-            NIX_INSTALL_CMD="$NIX_INSTALL_CMD --max-jobs 4"
-            NIX_INSTALL_CMD="$NIX_INSTALL_CMD --option substitute true"
-            NIX_INSTALL_CMD="$NIX_INSTALL_CMD --option builders-use-substitutes true"
-            NIX_INSTALL_CMD="$NIX_INSTALL_CMD --option require-sigs false"
+            NIX_INSTALL_CMD="nixos-install \
+              --root /mnt \
+              --no-root-password \
+              --flake github:anthonymoon/nixos-btrfs#$HOST \
+              --max-jobs 4 \
+              --option substitute true \
+              --option builders-use-substitutes true \
+              --option require-sigs false"
 
             # Show what we're doing
             print_info "Running nixos-install..."
@@ -604,7 +610,7 @@
               print_success "Installation completed successfully!"
               echo ""
               print_info "Next steps:"
-              echo "  1. Reboot into your new system: sudo reboot"
+              echo "  1. Reboot into your new system: reboot"
               echo "  2. Login as 'amoon' with password 'nixos'"
               echo "  3. Change your password: passwd"
               echo ""
