@@ -46,8 +46,9 @@
   services.qemuGuest.enable = true;
 
   # Workaround for btrfsck symlink conflict in NixOS 24.11
-  boot.initrd.systemd.enable = true;  # Use systemd-based initrd
-  
+  # Use systemd-based initrd if needed: boot.initrd.systemd.enable = true;
+  # Alternative: set NIXPKGS_ALLOW_BROKEN=1 during installation
+
   # Disable GUI
   services.xserver.enable = false;
 
