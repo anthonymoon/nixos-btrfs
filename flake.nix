@@ -675,6 +675,7 @@
               pkgs.parted
               pkgs.dosfstools
               pkgs.btrfs-progs
+              pkgs.zfs
               pkgs.nixos-install-tools
               pkgs.gnugrep
             ]}:$PATH"

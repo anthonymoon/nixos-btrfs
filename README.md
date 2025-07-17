@@ -44,18 +44,24 @@ A modular NixOS configuration following community standards with comprehensive s
 **Note**: Run as root user (no sudo needed in LiveCD)
 
 ```bash
-# Smart installer - handles space issues automatically (RECOMMENDED)
+# Automagic VM deployer - one command does it all (RECOMMENDED)
 # For BTRFS VM:
 nix run \
   --extra-experimental-features nix-command \
   --extra-experimental-features flakes \
-  github:anthonymoon/nixos-btrfs#smart-install -- vm /dev/sda
+  github:anthonymoon/nixos-btrfs#deploy-vm -- /dev/sda vm
 
 # For ZFS VM (auto-detects and handles NIXPKGS_ALLOW_BROKEN):
 nix run \
   --extra-experimental-features nix-command \
   --extra-experimental-features flakes \
-  github:anthonymoon/nixos-btrfs#smart-install -- vm-zfs /dev/sda
+  github:anthonymoon/nixos-btrfs#deploy-vm -- /dev/sda vm-zfs
+
+# Fully automated (skip confirmation, auto-reboot):
+nix run \
+  --extra-experimental-features nix-command \
+  --extra-experimental-features flakes \
+  github:anthonymoon/nixos-btrfs#deploy-vm -- /dev/sda vm --auto
 
 # Standard disko installer (if smart-install fails)
 nix run \
@@ -75,6 +81,23 @@ Available hosts:
 - `vm` - Minimal VM with BTRFS (recommended for testing)
 - `vm-zfs` - Minimal VM with ZFS (may require newer kernel)
 - `nixos` - Full desktop system with BTRFS+LUKS encryption
+
+### Deploy-VM Options
+
+The `deploy-vm` script supports automation flags:
+
+```bash
+# Options:
+#   -y, --auto-accept    Auto-accept disk wipe confirmation
+#   -r, --auto-reboot    Auto-reboot after installation
+#   -a, --auto           Enable both auto-accept and auto-reboot
+#   -h, --help           Show help message
+
+# Examples:
+nix run github:anthonymoon/nixos-btrfs#deploy-vm -- /dev/sda vm --auto-accept
+nix run github:anthonymoon/nixos-btrfs#deploy-vm -- /dev/sda vm --auto-reboot  
+nix run github:anthonymoon/nixos-btrfs#deploy-vm -- /dev/sda vm --auto
+```
 
 ### Manual Install
 
