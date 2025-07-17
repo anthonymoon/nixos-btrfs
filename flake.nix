@@ -575,34 +575,35 @@
               DISKO_CMD="$DISKO_CMD --impure"
             fi
 
-            # Run disko to partition and mount
-            print_info "Running: nix run github:nix-community/disko -- --mode destroy,format,mount --flake github:anthonymoon/nixos-btrfs#$HOST --disk main $DISK"
+            # Use our own disko-install which handles disk specification properly
+            print_info "Using integrated installer for $HOST on $DISK"
 
-            if $DISKO_CMD github:nix-community/disko -- \
-              --mode destroy,format,mount \
-              --flake "github:anthonymoon/nixos-btrfs#$HOST" \
-              --disk main "$DISK"; then
-              print_success "Disk partitioned and mounted successfully"
+            # Run our disko-install app directly
+            INSTALL_CMD="bash -c \"$NIX_CMD\""
+
+            # Build the disko-install command
+            NIX_CMD="nix run"
+            NIX_CMD="$NIX_CMD --extra-experimental-features nix-command"
+            NIX_CMD="$NIX_CMD --extra-experimental-features flakes"
+            NIX_CMD="$NIX_CMD --no-write-lock-file"
+            NIX_CMD="$NIX_CMD $EXTRA_FLAGS"
+            NIX_CMD="$NIX_CMD github:anthonymoon/nixos-btrfs#disko-install"
+            NIX_CMD="$NIX_CMD -- $HOST $DISK"
+
+            print_info "Executing installation..."
+            if eval "$NIX_CMD"; then
+              print_success "Installation completed successfully!"
+              echo ""
+              print_info "Next steps:"
+              echo "  1. Reboot into your new system: reboot"
+              echo "  2. Login as 'amoon' with password 'nixos'"
+              echo "  3. Change your password: passwd"
+              echo ""
+              print_success "Welcome to NixOS!"
             else
-              print_error "Disk partitioning failed"
-              print_info "You may need to run the installer with --refresh flag"
+              print_error "Installation failed"
               exit 1
             fi
-
-            print_info "Phase 2: Installing NixOS to /mnt..."
-
-            # Generate hardware configuration
-            nixos-generate-config --root /mnt --force || true
-
-            # Install with minimal substituters to avoid space issues
-            NIX_INSTALL_CMD="nixos-install \
-              --root /mnt \
-              --no-root-password \
-              --flake github:anthonymoon/nixos-btrfs#$HOST \
-              --max-jobs 4 \
-              --option substitute true \
-              --option builders-use-substitutes true \
-              --option require-sigs false"
 
             # Show what we're doing
             print_info "Running nixos-install..."
