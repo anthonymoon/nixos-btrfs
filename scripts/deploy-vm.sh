@@ -25,10 +25,11 @@ usage() {
   echo ""
 }
 
-DISK="${1:-/dev/sda}"
-HOST="${2:-vm}"
-AUTO_ACCEPT="${3:-}"
-AUTO_REBOOT="${4:-}"
+# Initialize variables
+DISK="/dev/sda"
+HOST="vm"
+AUTO_ACCEPT=""
+AUTO_REBOOT=""
 
 # Parse named flags
 while [[ $# -gt 0 ]]; do
@@ -73,6 +74,11 @@ echo "║                 Automagic NixOS VM Deployer                  ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 echo "Target: $HOST on $DISK"
+if [[ "$HOST" == *"zfs"* ]]; then
+  echo "Filesystem: ZFS"
+else
+  echo "Filesystem: BTRFS"
+fi
 if [[ "$AUTO_ACCEPT" == "true" ]]; then
   echo "Mode: Auto-accept enabled"
 fi
