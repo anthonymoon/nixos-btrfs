@@ -4,8 +4,8 @@
   lib,
   ...
 }: {
-  networking.hostName = "deadbeef";
   networking.domain = "dirtybit.co";
+  networking.hostId = "deadbeef";
 
   time.timeZone = "UTC";
   i18n.defaultLocale = "en_US.UTF-8";

@@ -13,6 +13,13 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote/v0.4.1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
   };
 
   outputs = {
@@ -20,6 +27,8 @@
     nixpkgs,
     home-manager,
     disko,
+    lanzaboote,
+    nixos-hardware,
     ...
   } @ inputs: let
     system = "x86_64-linux";
@@ -30,53 +39,123 @@
     };
 
     lib = nixpkgs.lib;
-  in {
-    nixosConfigurations = {
-      nixos = lib.nixosSystem {
+
+    # Helper function to create a NixOS system configuration
+    mkSystem = {
+      hostname,
+      diskConfig ? "btrfs-single",
+      extraModules ? [],
+    }:
+      lib.nixosSystem {
         inherit system;
         specialArgs = {inherit inputs self;};
+        modules =
+          [
+            # Core disko integration
+            disko.nixosModules.disko
 
-        modules = [
-          # Disko
-          disko.nixosModules.disko
+            # Disk configuration
+            ./modules/disko/${diskConfig}.nix
 
-          # Hardware
-          ./hosts/nixos/hardware-configuration.nix
-          ./hosts/nixos/disk-config.nix
+            # System modules
+            ./modules/system/performance.nix
+            ./modules/system/boot.nix
+            ./modules/system/maintenance.nix
 
-          # Core modules
-          ./modules/core.nix
-          ./modules/networking.nix
-          ./modules/nix-config.nix
+            # Hardware detection
+            ./hosts/${hostname}/hardware-configuration.nix
 
-          # Service modules
-          ./modules/desktop.nix
-          ./modules/gaming.nix
-          ./modules/media-server.nix
-          ./modules/development.nix
-          ./modules/virtualization.nix
-          ./modules/filesystems.nix
-          ./modules/snapshots.nix
-          ./modules/maintenance.nix
-          ./modules/binary-cache.nix
+            # Core modules
+            ./modules/core.nix
+            ./modules/networking.nix
+            ./modules/nix-config.nix
 
-          # Home Manager
-          home-manager.nixosModules.home-manager
+            # Service modules
+            ./modules/desktop.nix
+            ./modules/gaming.nix
+            ./modules/media-server.nix
+            ./modules/development.nix
+            ./modules/virtualization.nix
+            ./modules/filesystems.nix
+            ./modules/snapshots.nix
+            ./modules/binary-cache.nix
+
+            # Home Manager
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.amoon = import ./home.nix;
+            }
+
+            # Host specific configuration
+            ./hosts/${hostname}/configuration.nix
+
+            # Enable new system modules
+            {
+              system.performance.enable = true;
+              system.boot.enable = true;
+              maintenance.enable = true;
+
+              # Set hostname
+              networking.hostName = hostname;
+            }
+          ]
+          ++ extraModules;
+      };
+  in {
+    nixosConfigurations = {
+      # Main desktop/workstation - BTRFS with encryption
+      nixos = mkSystem {
+        hostname = "nixos";
+        diskConfig = "btrfs-luks";
+        extraModules = [
+          # Enable TPM and secure boot for encrypted system
           {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.amoon = import ./home.nix;
+            disko.encryption.tpmSupport = true;
+            system.boot.enableTPM = true;
+            # Optionally enable secure boot (requires manual setup)
+            # system.boot.secureBoot = true;
           }
-
-          # Host specific configuration
-          ./hosts/nixos/configuration.nix
         ];
       };
+
+      # Example additional hosts (uncomment and customize as needed)
+
+      # # Laptop configuration with single BTRFS
+      # laptop = mkSystem {
+      #   hostname = "laptop";
+      #   diskConfig = "btrfs-single";
+      #   extraModules = [
+      #     nixos-hardware.nixosModules.common-laptop
+      #     nixos-hardware.nixosModules.common-laptop-ssd
+      #   ];
+      # };
+
+      # # Server with ZFS mirror
+      # server = mkSystem {
+      #   hostname = "server";
+      #   diskConfig = "zfs-mirror";
+      #   extraModules = [
+      #     { services.openssh.enable = true; }
+      #   ];
+      # };
+
+      # # Workstation with single ZFS disk
+      # workstation = mkSystem {
+      #   hostname = "workstation";
+      #   diskConfig = "zfs-single";
+      #   extraModules = [
+      #     nixos-hardware.nixosModules.common-gpu-nvidia
+      #     { system.performance.disableMitigations = true; }
+      #   ];
+      # };
     };
 
-    # Development shell
+    # Development shell with enhanced tools
     devShells.${system}.default = pkgs.mkShell {
       packages = with pkgs; [
+        # Nix tools
         nixos-rebuild
         nh
         nix-output-monitor
@@ -84,22 +163,61 @@
         statix
         deadnix
         alejandra
+
+        # Disko and installation tools
+        disko.packages.${system}.disko
+        util-linux
+        parted
+        smartmontools
+
+        # System tools
         git
+        jq
+        rsync
+
+        # Filesystem tools
+        btrfs-progs
+        zfs
+
+        # Monitoring and debugging
+        btop
+        iotop
+
+        # TPM tools (for encryption)
+        tpm2-tools
       ];
 
       shellHook = ''
-        echo "NixOS Development Environment"
+        echo "NixOS Disko Development Environment"
+        echo "=================================="
+        echo ""
+        echo "Installation commands:"
+        echo "  ./scripts/install-interactive.sh  # Interactive installer"
+        echo "  ./scripts/mount-system.sh         # Mount existing system"
+        echo ""
+        echo "Manual disko commands:"
+        echo "  sudo nix run github:nix-community/disko#disko-install -- --flake .#nixos"
+        echo "  sudo disko --mode disko --flake .#nixos"
         echo ""
         echo "System rebuild:"
         echo "  sudo nixos-rebuild switch --flake .#nixos"
         echo ""
-        echo "Fresh installation:"
-        echo "  sudo nix run .#install"
+        echo "Available disk configurations:"
+        echo "  - btrfs-single: Single disk BTRFS"
+        echo "  - btrfs-luks:   Encrypted BTRFS with TPM2"
+        echo "  - zfs-single:   Single disk ZFS"
+        echo "  - zfs-mirror:   ZFS mirror (2 disks)"
         echo ""
         echo "Flake commands:"
         echo "  nix flake update"
         echo "  nix flake check"
         echo "  nix fmt"
+        echo ""
+        echo "Example hosts:"
+        echo "  nixos       - Main system (btrfs-luks)"
+        echo "  laptop      - Laptop system (btrfs-single) [commented]"
+        echo "  server      - Server system (zfs-mirror) [commented]"
+        echo "  workstation - Workstation (zfs-single) [commented]"
       '';
     };
 
@@ -173,72 +291,63 @@
 
     # Apps for direct execution
     apps.${system} = {
+      # Interactive installer
       install = {
         type = "app";
-        program = "${pkgs.writeShellScriptBin "nixos-installer" ''
+        program = "${pkgs.writeShellScriptBin "install-interactive" ''
+          #!/usr/bin/env bash
+          exec ${./scripts/install-interactive.sh}
+        ''}/bin/install-interactive";
+      };
+
+      # System mount tool
+      mount = {
+        type = "app";
+        program = "${pkgs.writeShellScriptBin "mount-system" ''
+          #!/usr/bin/env bash
+          exec ${./scripts/mount-system.sh}
+        ''}/bin/mount-system";
+      };
+
+      # Direct disko install
+      disko-install = {
+        type = "app";
+        program = "${pkgs.writeShellScriptBin "disko-install" ''
           #!/usr/bin/env bash
           set -euo pipefail
 
-          echo "NixOS Installer"
-          echo "==============="
-          echo ""
-          echo "This will install NixOS with configuration from:"
-          echo "https://github.com/anthonymoon/nixos-btrfs"
-          echo ""
-          echo "WARNING: This will ERASE the target disk!"
-          echo ""
+          HOST="''${1:-nixos}"
+          DISK="''${2:-}"
 
-          # Default values
-          DISK="''${1:-/dev/sda}"
-          FLAKE_URL="github:anthonymoon/nixos-btrfs#nixos"
+          echo "NixOS Disko Installer"
+          echo "===================="
+          echo "Host: $HOST"
 
-          # Show disk info
-          echo "Target disk: $DISK"
-          echo ""
-          if [[ -b "$DISK" ]]; then
-              echo "Disk information:"
-              lsblk "$DISK" || true
-              echo ""
+          if [[ -n "$DISK" ]]; then
+            echo "Disk: $DISK"
+            exec sudo nix run github:nix-community/disko#disko-install -- \
+              --flake ".#$HOST" --disk main "$DISK" --write-efi-boot-entries
           else
-              echo "ERROR: $DISK is not a block device"
-              exit 1
+            echo "Using auto-detected disk"
+            exec sudo nix run github:nix-community/disko#disko-install -- \
+              --flake ".#$HOST" --write-efi-boot-entries
           fi
-
-          # Confirmation
-          read -p "Continue with installation to $DISK? (yes/no): " confirm
-          if [[ "$confirm" != "yes" ]]; then
-              echo "Installation cancelled"
-              exit 0
-          fi
-
-          echo ""
-          echo "Starting installation..."
-          echo ""
-
-          # Partition and format disk
-          echo "==> Partitioning disk with disko..."
-          nix --extra-experimental-features "nix-command flakes" run github:nix-community/disko -- --mode disko --flake "$FLAKE_URL"
-
-          # Install NixOS
-          echo ""
-          echo "==> Installing NixOS..."
-          nixos-install --flake "$FLAKE_URL" --no-root-password --no-write-lock-file
-
-          echo ""
-          echo "Installation complete!"
-          echo ""
-          echo "Next steps:"
-          echo "1. Reboot into your new system"
-          echo "2. Set user password: passwd amoon"
-          echo "3. Deploy updates: sudo nixos-rebuild switch --flake github:anthonymoon/nixos-btrfs#nixos"
-          echo ""
-          echo "Enjoy your new NixOS system!"
-        ''}/bin/nixos-installer";
+        ''}/bin/disko-install";
       };
 
+      # Run VM for testing
       run-vm = {
         type = "app";
         program = "${self.nixosConfigurations.nixos.config.system.build.vm}/bin/run-nixos-vm";
+      };
+
+      # Test binary cache
+      test-cache = {
+        type = "app";
+        program = "${pkgs.writeShellScriptBin "test-cache" ''
+          #!/usr/bin/env bash
+          exec ${./scripts/test-binary-cache.sh} "''${@}"
+        ''}/bin/test-cache";
       };
     };
   };

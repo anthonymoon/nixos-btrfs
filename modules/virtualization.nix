@@ -40,13 +40,12 @@
   ];
 
   boot.kernel.sysctl = {
-    "vm.swappiness" = 10;
-    "vm.vfs_cache_pressure" = 50;
+    "vm.swappiness" = lib.mkDefault 10;
   };
 
   zramSwap = {
-    enable = true;
-    memoryPercent = 100;
+    enable = lib.mkDefault true;
+    memoryPercent = lib.mkDefault 100;
     algorithm = "zstd";
   };
 }
