@@ -42,8 +42,49 @@
     tmux
   ];
 
-  # Enable QEMU guest agent
+  # VM guest services (auto-detects virtualization platform)
   services.qemuGuest.enable = true;
+  
+  # VM optimizations for better performance
+  boot.kernelParams = [
+    "console=ttyS0"        # Serial console for headless VMs
+    "console=tty0"         # Keep local console
+  ];
+  
+  # Hyper-V specific optimizations
+  boot.kernelModules = ["hv_vmbus" "hv_balloon" "hv_storvsc" "hv_netvsc"];
+  boot.initrd.kernelModules = ["hv_vmbus" "hv_storvsc"];
+  
+  # Enable Hyper-V guest services
+  systemd.services.hv-fcopy = {
+    description = "Hyper-V File Copy Service";
+    wantedBy = ["multi-user.target"];
+    serviceConfig = {
+      ExecStart = "${pkgs.linuxPackages.hyperv-daemons}/bin/hv_fcopy_daemon -n";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+  };
+  
+  systemd.services.hv-kvp = {
+    description = "Hyper-V Key-Value Pair Service";
+    wantedBy = ["multi-user.target"];
+    serviceConfig = {
+      ExecStart = "${pkgs.linuxPackages.hyperv-daemons}/bin/hv_kvp_daemon -n";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+  };
+  
+  systemd.services.hv-vss = {
+    description = "Hyper-V Volume Shadow Copy Service";
+    wantedBy = ["multi-user.target"];
+    serviceConfig = {
+      ExecStart = "${pkgs.linuxPackages.hyperv-daemons}/bin/hv_vss_daemon -n";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
+  };
 
   # Workaround for btrfsck symlink conflict in NixOS 24.11
   # Use systemd-based initrd if needed: boot.initrd.systemd.enable = true;

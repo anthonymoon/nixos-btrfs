@@ -120,28 +120,26 @@
         ];
       };
 
-      # Minimal VM configuration with BTRFS
+      # Minimal VM configuration with BTRFS (supports QEMU and Hyper-V)
       vm = mkSystem {
         hostname = "vm";
         diskConfig = "btrfs-single";
         extraModules = [
           {
-            # VM-specific optimizations
-            services.qemuGuest.enable = true;
-            boot.kernelParams = ["console=ttyS0"];
+            # VM configurations are in hosts/vm/configuration.nix
+            # Includes QEMU guest agent and Hyper-V optimizations
           }
         ];
       };
 
-      # Minimal VM configuration with ZFS (may require newer kernel)
+      # Minimal VM configuration with ZFS (supports QEMU and Hyper-V)
       vm-zfs = mkSystem {
         hostname = "vm-zfs";
         diskConfig = "zfs-single";
         extraModules = [
           {
-            # VM-specific optimizations
-            services.qemuGuest.enable = true;
-            boot.kernelParams = ["console=ttyS0"];
+            # VM configurations are in hosts/vm-zfs/configuration.nix
+            # Includes QEMU guest agent and Hyper-V optimizations
             # Allow broken packages for ZFS kernel compatibility
             nixpkgs.config.allowBroken = true;
           }

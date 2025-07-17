@@ -78,8 +78,8 @@ NIXPKGS_ALLOW_BROKEN=1 nix run \
 ```
 
 Available hosts:
-- `vm` - Minimal VM with BTRFS (recommended for testing)
-- `vm-zfs` - Minimal VM with ZFS (may require newer kernel)
+- `vm` - Minimal VM with BTRFS (supports QEMU/KVM and Hyper-V)
+- `vm-zfs` - Minimal VM with ZFS (supports QEMU/KVM and Hyper-V)
 - `nixos` - Full desktop system with BTRFS+LUKS encryption
 
 ### Deploy-VM Options
@@ -98,6 +98,27 @@ nix run github:anthonymoon/nixos-btrfs#deploy-vm -- /dev/sda vm --auto-accept
 nix run github:anthonymoon/nixos-btrfs#deploy-vm -- /dev/sda vm --auto-reboot  
 nix run github:anthonymoon/nixos-btrfs#deploy-vm -- /dev/sda vm --auto
 ```
+
+### VM Platform Support
+
+The VM configurations include optimizations for multiple virtualization platforms:
+
+**QEMU/KVM:**
+- QEMU guest agent for host integration
+- VirtIO optimizations
+- Serial console support
+
+**Hyper-V:**
+- Hyper-V kernel modules (hv_vmbus, hv_balloon, hv_storvsc, hv_netvsc)
+- Hyper-V guest services (file copy, key-value pairs, VSS)
+- Enhanced session mode support
+- Automatic detection and loading
+
+**Both platforms:**
+- UEFI boot support with variable modification
+- Optimized for headless operation
+- SSH enabled by default
+- Serial console access
 
 ### Manual Install
 
