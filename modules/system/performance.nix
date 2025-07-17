@@ -53,7 +53,7 @@ in {
     # Kernel parameters for better performance
     boot.kernel.sysctl = {
       # VM tuning for better responsiveness
-      "vm.swappiness" = lib.mkDefault 10; # Prefer RAM over swap
+      # vm.swappiness is set in virtualization.nix or disk configs
       "vm.vfs_cache_pressure" = lib.mkDefault 50; # Keep file cache longer
       "vm.dirty_ratio" = lib.mkDefault 10; # Start writeback at 10% dirty pages
       "vm.dirty_background_ratio" = lib.mkDefault 5; # Background writeback at 5%
