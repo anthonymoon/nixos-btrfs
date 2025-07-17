@@ -570,22 +570,23 @@
               --no-write-lock-file"
 
             # For ZFS configs, we need special handling
+            EXTRA_FLAGS=""
             if [[ "$HOST" == *"zfs"* ]]; then
               export NIXPKGS_ALLOW_BROKEN=1
-              DISKO_CMD="$DISKO_CMD --impure"
+              EXTRA_FLAGS="--impure"
             fi
 
             # Use our own disko-install which handles disk specification properly
             print_info "Using integrated installer for $HOST on $DISK"
-
-            # Run our disko-install app directly
-            INSTALL_CMD="bash -c \"$NIX_CMD\""
 
             # Build the disko-install command
             NIX_CMD="nix run"
             NIX_CMD="$NIX_CMD --extra-experimental-features nix-command"
             NIX_CMD="$NIX_CMD --extra-experimental-features flakes"
             NIX_CMD="$NIX_CMD --no-write-lock-file"
+
+            # Set EXTRA_FLAGS for ZFS if not already set
+            EXTRA_FLAGS="''${EXTRA_FLAGS:-}"
             NIX_CMD="$NIX_CMD $EXTRA_FLAGS"
             NIX_CMD="$NIX_CMD github:anthonymoon/nixos-btrfs#disko-install"
             NIX_CMD="$NIX_CMD -- $HOST $DISK"
