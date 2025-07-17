@@ -662,6 +662,26 @@
           '';
         in "${minimalInstall}/bin/minimal-install";
       };
+
+      # Automagic VM deployment - one command does it all
+      deploy-vm = {
+        type = "app";
+        program = let
+          deployVm = pkgs.writeShellScriptBin "deploy-vm" ''
+            #!/usr/bin/env bash
+            export PATH="${pkgs.lib.makeBinPath [
+              pkgs.coreutils
+              pkgs.util-linux
+              pkgs.parted
+              pkgs.dosfstools
+              pkgs.btrfs-progs
+              pkgs.nixos-install-tools
+              pkgs.gnugrep
+            ]}:$PATH"
+            exec ${./scripts/deploy-vm.sh} "$@"
+          '';
+        in "${deployVm}/bin/deploy-vm";
+      };
     };
   };
 }
